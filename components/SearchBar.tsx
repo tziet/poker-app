@@ -14,17 +14,17 @@ const SearchBar = ({ placeholder, onPress }: Props) => {
         source={icons.search}
         className="size-5"
         resizeMode="contain"
-        tintColor="black"
+        tintColor="white"
       />
-      {/*<TextInput*/}
-      {/*  onPress={onPress}*/}
-      {/*  placeholder={placeholder}*/}
-      {/*  value=""*/}
-      {/*  onChangeText={() => {}}*/}
-      {/*  placeholderTextColor="#0c1210"*/}
-      {/*  className="flex-1 ml-2 text-white"*/}
-      {/*/>*/}
-      <Button onPress={onPress} title="New Game" />
+      <TextInput
+        onPress={onPress}
+        placeholder={placeholder}
+        value=""
+        onChangeText={() => {}}
+        placeholderTextColor="white"
+        className="flex-1 ml-2 text-white"
+      />
+      {/*<Button onPress={onPress} title="New Game" />*/}
     </View>
   );
 };
