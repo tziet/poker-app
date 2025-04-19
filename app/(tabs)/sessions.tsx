@@ -25,7 +25,7 @@ export default function Sessions() {
 
   return (
     <>
-      <View className="flex-1 bg-light-200">
+      <View className="flex-1 bg-primary">
         <ScrollView
           className="flex-1 px-5"
           showsVerticalScrollIndicator={false}
@@ -35,6 +35,7 @@ export default function Sessions() {
             source={icons.logo}
             className="w-12 h-10 mt-20 mb-5 mx-auto"
             resizeMode="contain"
+            tintColor="white"
           />
           {moviesLoading ? (
             <ActivityIndicator
@@ -51,7 +52,7 @@ export default function Sessions() {
                 placeholder="Search for something"
               />
               <>
-                <Text className="text-ig text-black font-bold mt-5 mb-3">
+                <Text className="text-ig text-white font-bold mt-5 mb-3">
                   Latest Movies
                 </Text>
                 <FlatList

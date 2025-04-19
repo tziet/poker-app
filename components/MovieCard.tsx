@@ -23,7 +23,7 @@ const MovieCard = ({
           resizeMode="cover"
         />
 
-        <Text className="text-sm font-bold tex-black mt-2" numberOfLines={1}>
+        <Text className="text-sm font-bold text-white mt-2" numberOfLines={1}>
           {title}
         </Text>
 
@@ -38,9 +38,6 @@ const MovieCard = ({
           <Text className="text-xs text-white font-medium mt-1">
             {release_date?.split("-")[0]}
           </Text>
-          {/*<Text className="text-xs text-white font-medium uppercase">*/}
-          {/*  Movie*/}
-          {/*</Text>*/}
         </View>
       </TouchableOpacity>
     </Link>

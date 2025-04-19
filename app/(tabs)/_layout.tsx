@@ -1,5 +1,5 @@
 import React from "react";
-import { View, Text, StyleSheet, ImageBackground, Image } from "react-native";
+import { View, Text, ImageBackground, Image } from "react-native";
 import { Tabs } from "expo-router";
 import { images } from "@/constants/images";
 import { icons } from "@/constants/icons";
@@ -37,7 +37,7 @@ const _Layout = () => {
           alignItems: "center",
         },
         tabBarStyle: {
-          backgroundColor: "#0f0d23",
+          backgroundColor: "#0F0D23",
           borderRadius: 50,
           marginHorizontal: 20,
           marginBottom: 36,
