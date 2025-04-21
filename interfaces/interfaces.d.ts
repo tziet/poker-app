@@ -1,3 +1,16 @@
+interface Player {
+  $id: string;
+  name: string;
+  chips: number;
+  seat: number | null;
+}
+
+interface NewPlayer {
+  name: string;
+  chips: number;
+  seat: number | null;
+}
+
 interface Movie {
   id: number;
   title: string;

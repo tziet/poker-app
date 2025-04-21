@@ -8,6 +8,11 @@ import play from "@/assets/icons/play.png";
 import arrow from "@/assets/icons/arrow.png";
 import sessions from "@/assets/icons/sessions.png";
 import table from "@/assets/icons/table.png";
+import plus from "@/assets/icons/plus.png";
+import user from "@/assets/icons/user.png";
+import edit from "@/assets/icons/edit.png";
+import deleteIcon from "@/assets/icons/deleteIcon.png";
+import removeUser from "@/assets/icons/removeUser.png";
 
 export const icons = {
   home,
@@ -20,4 +25,9 @@ export const icons = {
   arrow,
   sessions,
   table,
+  plus,
+  user,
+  edit,
+  deleteIcon,
+  removeUser,
 };
