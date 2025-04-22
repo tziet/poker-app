@@ -1,7 +1,8 @@
-import { Image, View } from "react-native";
+import React from "react";
+import { View, Text, StyleSheet, Image } from "react-native";
 import { icons } from "@/constants/icons";
 
-export default function Index() {
+const Profile = () => {
   return (
     <View className="flex-1 bg-primary">
       <Image
@@ -12,4 +13,6 @@ export default function Index() {
       />
     </View>
   );
-}
+};
+
+export default Profile;
