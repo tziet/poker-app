@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "Poker Tracker",
-    "slug": "poker_app",
+    "slug": "pocker-tracker",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/pokerLogo.png",
@@ -36,6 +36,15 @@
     ],
     "experiments": {
       "typedRoutes": true
-    }
+    },
+    "extra": {
+      "router": {
+        "origin": false
+      },
+      "eas": {
+        "projectId": "ea0535d2-570b-41f5-9578-e5ac74a52f46"
+      }
+    },
+    "owner": "yonatantseitlin"
   }
 }
