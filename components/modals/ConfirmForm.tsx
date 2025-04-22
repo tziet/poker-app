@@ -9,24 +9,18 @@ import {
 import { router } from "expo-router";
 import { deletePlayer } from "@/services/appwrite";
 
-type ChildComponentProps = {
+type ConfirmFormProps = {
   id: string;
   setModalVisible: React.Dispatch<React.SetStateAction<boolean>>;
 };
 
-const ConfirmForm: React.FC<ChildComponentProps> = ({
-  id,
-  setModalVisible,
-}: ChildComponentProps) => {
-  const handleDeletePlayer = async ({
-    id,
-    setModalVisible,
-  }: ChildComponentProps) => {
+const ConfirmForm: React.FC<ConfirmFormProps> = (data: ConfirmFormProps) => {
+  const handleDeletePlayer = async (data: ConfirmFormProps) => {
     try {
-      await deletePlayer(id);
+      await deletePlayer(data.id);
       router.back();
       alert("Player has been deleted");
-      setModalVisible(false);
+      data.setModalVisible(false);
     } catch (err) {
       console.error("Error deleting player:", err);
       alert("Error deleting player");
@@ -37,14 +31,19 @@ const ConfirmForm: React.FC<ChildComponentProps> = ({
     <View className="bg-white p-6 rounded-2xl w-4/5">
       <View className="flex-row justify-between mt-4">
         <TouchableOpacity
-          onPress={() => setModalVisible(false)}
+          onPress={() => data.setModalVisible(false)}
           className="px-4 py-2 rounded-lg bg-gray-200"
         >
           <Text className="text-gray-700">Cancel</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
-          onPress={() => handleDeletePlayer({ id, setModalVisible })}
+          onPress={() =>
+            handleDeletePlayer({
+              id: data.id,
+              setModalVisible: data.setModalVisible,
+            })
+          }
           className="px-4 py-2 rounded-lg bg-blue-500"
         >
           <Text className="text-white font-bold">Delete</Text>

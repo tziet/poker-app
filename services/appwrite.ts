@@ -34,6 +34,7 @@ export const getPlayerDetails = async (id: string): Promise<Player[]> => {
   ]);
 
   if (response.documents.length === 0) return [];
+
   return response.documents.map((doc) => ({
     $id: doc.$id,
     name: doc.name,
@@ -61,7 +62,28 @@ export const getAllPlayers = async (queries?: string[]): Promise<Player[]> => {
   return data;
 };
 
-// export const updatePlayer = async (): Promise<Player> => {};
+export const updatePlayer = async (
+  id: string,
+  player: Player,
+): Promise<Player> => {
+  const response = await databases.updateDocument(
+    DATABASE_ID,
+    COLLECTION_ID,
+    id,
+    player,
+  );
+
+  if (!response.documents) {
+    return null as any;
+  }
+
+  return {
+    $id: response.documents.$id,
+    name: response.documents.name,
+    chips: response.documents.chips,
+    seat: response.documents.seat,
+  };
+};
 
 export const deletePlayer = async (id: string): Promise<void> => {
   await databases.deleteDocument(DATABASE_ID, COLLECTION_ID, id);

@@ -5,7 +5,7 @@ import { icons } from "@/constants/icons";
 
 const GoBackButton = () => {
   return (
-    <View>
+    <View className="flex-1">
       <TouchableOpacity
         className="absolute bottom-5 left-0 right-0 mx-5 bg-accent rounded-lg py-3.5 flex flex-row items-center justify-center z-50"
         onPress={router.back}

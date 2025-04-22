@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useCallback, useState } from "react";
 import {
   View,
   Image,
@@ -14,7 +14,10 @@ import { useEffect } from "react";
 import { Query } from "appwrite";
 import { createPlayer, deletePlayer, getAllPlayers } from "@/services/appwrite";
 import { icons } from "@/constants/icons";
-import { Link, router } from "expo-router";
+import { Link, useRouter } from "expo-router";
+import { useFocusEffect } from "@react-navigation/native";
+import useFetch from "@/services/useFetch";
+import { fetchMovies } from "@/services/api";
 
 type NewPlayerButtonProps = {
   onPress: () => void;
@@ -28,11 +31,19 @@ type UserButtonProps = {
 };
 
 const Table = () => {
+  const router = useRouter();
+
   const [modalVisible, setModalVisible] = useState(false);
   const [players, setPlayers] = useState<(Player | null)[]>(
     Array(8).fill(null),
   );
   const [selectedPosition, setSelectedPosition] = useState<number | null>(null);
+
+  // const {
+  //   data: users,
+  //   loading: usersLoading,
+  //   error: usersError,
+  // } = useFetch(() => getAllPlayers([Query.orderAsc("seat")]));
 
   useEffect(() => {
     const loadPlayers = async () => {
@@ -47,6 +58,22 @@ const Table = () => {
 
     loadPlayers();
   }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      const loadPlayers = async () => {
+        try {
+          const response = await getAllPlayers([Query.orderAsc("seat")]);
+
+          setPlayers(response);
+        } catch (err) {
+          console.error("Error loading players:", err);
+        }
+      };
+
+      loadPlayers();
+    }, []),
+  );
 
   const NewPlayerButton = ({ onPress, style }: NewPlayerButtonProps) => {
     return (
@@ -78,6 +105,9 @@ const Table = () => {
             resizeMode="contain"
             tintColor="white"
           />
+          <Text className="text-white text-xs mb-1 text-center mt-5">
+            Chips: {player.chips}
+          </Text>
         </TouchableOpacity>
       </Link>
     );
