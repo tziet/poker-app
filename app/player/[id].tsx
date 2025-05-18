@@ -18,6 +18,7 @@ import {
 import GoBackButton from "@/components/GoBackButton";
 import ConfirmForm from "@/components/modals/ConfirmForm";
 import EditAttributeForm from "@/components/modals/EditAttributeForm";
+import { showToastWithGravityAndOffset } from "@/components/toasts";
 
 interface PlayerInfoProps {
   label: string;
@@ -70,7 +71,7 @@ const Details = () => {
     try {
       await deletePlayer(id);
       router.back();
-      alert("Player has been deleted");
+      alert(`Player ${player?.name} has been deleted.`);
       setConfirmModalVisible(false);
     } catch (err) {
       console.error("Error deleting player:", err);
@@ -89,8 +90,8 @@ const Details = () => {
     if (updatedPlayer === null) return;
     try {
       await updatePlayer(playerId, updatedPlayer);
-
       setEditModalVisible(false);
+      alert(`Player ${player?.name} has been updated.`);
     } catch (err) {
       console.error("Error updating player:", err);
       alert("Error updating player");
@@ -136,7 +137,7 @@ const Details = () => {
           value={player?.seat != null ? player.seat + 1 : "N/A"}
         />
         <TouchableOpacity
-          className="left-0 right-0 bg-accent rounded-lg py-3.5 flex flex-row items-center justify-center "
+          className="left-0 right-0 bg-orange-500 rounded-lg py-3.5 flex flex-row items-center justify-center "
           onPress={() => setEditModalVisible(true)}
         >
           <Image

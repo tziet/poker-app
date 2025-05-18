@@ -13,6 +13,7 @@ import user from "@/assets/icons/user.png";
 import edit from "@/assets/icons/edit.png";
 import deleteIcon from "@/assets/icons/deleteIcon.png";
 import removeUser from "@/assets/icons/removeUser.png";
+import cash from "@/assets/icons/cash.png";
 
 export const icons = {
   home,
@@ -30,4 +31,5 @@ export const icons = {
   edit,
   deleteIcon,
   removeUser,
+  cash,
 };

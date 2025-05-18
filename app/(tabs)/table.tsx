@@ -33,7 +33,7 @@ type UserButtonProps = {
 const Table = () => {
   const router = useRouter();
 
-  const [modalVisible, setModalVisible] = useState(false);
+  const [createModalVisible, setCreateModalVisible] = useState(false);
   const [players, setPlayers] = useState<(Player | null)[]>(
     Array(8).fill(null),
   );
@@ -122,7 +122,7 @@ const Table = () => {
       const updated = [...players];
       updated[selectedPosition] = newPlayer;
       setPlayers(updated);
-      setModalVisible(false);
+      setCreateModalVisible(false);
       setSelectedPosition(null);
     } catch (err) {
       console.error("Error creating player:", err);
@@ -154,6 +154,13 @@ const Table = () => {
         tintColor="white"
       />
 
+      <Image
+        source={icons.cash}
+        className="w-18 h-15 absolute top-10 mt-20 mx-auto "
+        resizeMode="contain"
+        // tintColor="white"
+      />
+
       <View className="flex-1 justify-center items-center">
         <Image
           source={images.pTable}
@@ -169,7 +176,7 @@ const Table = () => {
             key={i}
             onPress={() => {
               setSelectedPosition(i);
-              setModalVisible(true);
+              setCreateModalVisible(true);
             }}
             style={style}
           />
@@ -183,10 +190,10 @@ const Table = () => {
         ),
       )}
 
-      <Modal visible={modalVisible} transparent animationType="slide">
+      <Modal visible={createModalVisible} transparent animationType="slide">
         <View className="flex-1 justify-center items-center bg-black/60">
           <CreatePlayerForm
-            onClose={() => setModalVisible(false)}
+            onClose={() => setCreateModalVisible(false)}
             onSubmit={handleCreatePlayer}
             selectedSeat={selectedPosition}
           />
