@@ -7,7 +7,7 @@
     "icon": "./assets/images/pokerLogo.png",
     "scheme": "myapp",
     "userInterfaceStyle": "automatic",
-    "newArchEnabled": false,
+    "newArchEnabled": true,
     "ios": {
       "supportsTablet": true
     },
@@ -15,7 +15,8 @@
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/pokerLogo.png",
         "backgroundColor": "#ffffff"
-      }
+      },
+      "package": "com.yonatantseitlin.pockertracker"
     },
     "web": {
       "bundler": "metro",

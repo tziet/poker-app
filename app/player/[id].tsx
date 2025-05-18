@@ -71,6 +71,7 @@ const Details = () => {
       await deletePlayer(id);
       router.back();
       alert("Player has been deleted");
+      setConfirmModalVisible(false);
     } catch (err) {
       console.error("Error deleting player:", err);
       alert("Error deleting player");
@@ -173,6 +174,7 @@ const Details = () => {
             <ConfirmForm
               id={playerId}
               setModalVisible={setConfirmModalVisible}
+              onConfirm={handleDeletePlayer}
             />
           )}
           {editModalVisible && (
