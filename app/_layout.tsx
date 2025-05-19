@@ -14,6 +14,12 @@ export default function RootLayout() {
             headerShown: false,
           }}
         />
+        <Stack.Screen
+          name="screens/moneySummary"
+          options={{
+            headerShown: false,
+          }}
+        />
       </Stack>
     </>
   );
