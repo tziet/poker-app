@@ -55,7 +55,7 @@ const MoneySummary = () => {
       const playersWithAmounts = players
         .map((player) => {
           if (player) {
-            const netChange = currentChips[player.$id] - player.chips; // Net difference in chips
+            const netChange = currentChips[player.$id] - player.chips;
             return { playerName: player.name, netChange, id: player.$id };
           }
           return null;
@@ -66,8 +66,8 @@ const MoneySummary = () => {
         id: string;
       }[];
 
-      const lenders = playersWithAmounts.filter((p) => p.netChange > 0); // Players with positive changes
-      const borrowers = playersWithAmounts.filter((p) => p.netChange < 0); // Players with negative changes
+      const lenders = playersWithAmounts.filter((p) => p.netChange > 0);
+      const borrowers = playersWithAmounts.filter((p) => p.netChange < 0);
 
       const transactions: {
         lender: string;
@@ -78,7 +78,6 @@ const MoneySummary = () => {
       let i = 0,
         j = 0;
 
-      // Match debts between lenders and borrowers
       while (i < lenders.length && j < borrowers.length) {
         const lender = lenders[i];
         const borrower = borrowers[j];
@@ -94,11 +93,9 @@ const MoneySummary = () => {
           amount: amountToSettle,
         });
 
-        // Update the amounts
         lenders[i].netChange -= amountToSettle;
         borrowers[j].netChange += amountToSettle;
 
-        // Move on to the next lender or borrower if their balance is settled
         if (lenders[i].netChange === 0) i++;
         if (borrowers[j].netChange === 0) j++;
       }
@@ -106,19 +103,17 @@ const MoneySummary = () => {
       return transactions;
     };
 
-    // Calculate and update the debts state
     const transactionDetails = calculateTransactions();
     setDebts(transactionDetails);
   }, [currentChips, players]);
 
   return (
     <View className="flex-1 bg-primary">
-      {/* This container ensures appropriate space allocation */}
       <ScrollView
         className="flex-1 px-5"
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{
-          paddingBottom: 80, // Add space to avoid overlap with GoBackButton
+          paddingBottom: 80,
         }}
       >
         <Image
@@ -207,7 +202,6 @@ const MoneySummary = () => {
         </View>
       </ScrollView>
 
-      {/* GoBackButton is fixed at the bottom */}
       <GoBackButton />
     </View>
   );
