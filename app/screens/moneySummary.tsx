@@ -4,6 +4,7 @@ import { icons } from "@/constants/icons";
 import GoBackButton from "@/components/GoBackButton";
 import { getAllPlayers, getTableMoneySum } from "@/services/appwrite";
 import { Query } from "appwrite";
+import { Ionicons } from "@expo/vector-icons";
 
 const MoneySummary = () => {
   const [moneySum, setMoneySum] = useState<number>(0);
@@ -13,6 +14,10 @@ const MoneySummary = () => {
   const [currentChips, setCurrentChips] = useState<{ [id: string]: number }>(
     {},
   );
+
+  const [debts, setDebts] = useState<
+    { lender: string; borrower: string; amount: number }[]
+  >([]);
 
   useEffect(() => {
     const fetchTableData = async () => {
@@ -45,12 +50,76 @@ const MoneySummary = () => {
     }));
   };
 
+  useEffect(() => {
+    const calculateTransactions = () => {
+      const playersWithAmounts = players
+        .map((player) => {
+          if (player) {
+            const netChange = currentChips[player.$id] - player.chips; // Net difference in chips
+            return { playerName: player.name, netChange, id: player.$id };
+          }
+          return null;
+        })
+        .filter((p) => p !== null) as {
+        playerName: string;
+        netChange: number;
+        id: string;
+      }[];
+
+      const lenders = playersWithAmounts.filter((p) => p.netChange > 0); // Players with positive changes
+      const borrowers = playersWithAmounts.filter((p) => p.netChange < 0); // Players with negative changes
+
+      const transactions: {
+        lender: string;
+        borrower: string;
+        amount: number;
+      }[] = [];
+
+      let i = 0,
+        j = 0;
+
+      // Match debts between lenders and borrowers
+      while (i < lenders.length && j < borrowers.length) {
+        const lender = lenders[i];
+        const borrower = borrowers[j];
+
+        const amountToSettle = Math.min(
+          lender.netChange,
+          Math.abs(borrower.netChange),
+        );
+
+        transactions.push({
+          lender: lender.playerName,
+          borrower: borrower.playerName,
+          amount: amountToSettle,
+        });
+
+        // Update the amounts
+        lenders[i].netChange -= amountToSettle;
+        borrowers[j].netChange += amountToSettle;
+
+        // Move on to the next lender or borrower if their balance is settled
+        if (lenders[i].netChange === 0) i++;
+        if (borrowers[j].netChange === 0) j++;
+      }
+
+      return transactions;
+    };
+
+    // Calculate and update the debts state
+    const transactionDetails = calculateTransactions();
+    setDebts(transactionDetails);
+  }, [currentChips, players]);
+
   return (
     <View className="flex-1 bg-primary">
+      {/* This container ensures appropriate space allocation */}
       <ScrollView
         className="flex-1 px-5"
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ minHeight: "100%", paddingBottom: 10 }}
+        contentContainerStyle={{
+          paddingBottom: 80, // Add space to avoid overlap with GoBackButton
+        }}
       >
         <Image
           source={icons.cash}
@@ -103,7 +172,42 @@ const MoneySummary = () => {
               </View>
             ),
         )}
+
+        <View className="mt-5">
+          <Text className="text-white text-lg font-bold text-center">
+            Transactions Summary
+          </Text>
+
+          {debts.length > 0 ? (
+            debts.map((debt, index) => (
+              <View
+                key={index}
+                className="flex-row justify-between bg-secondary p-3 rounded mt-2"
+              >
+                <View className="flex-row items-center">
+                  <Text className="text-red-500">{debt.borrower}</Text>
+                  <Ionicons
+                    name="arrow-forward-outline"
+                    size={20}
+                    color="white"
+                    style={{ marginHorizontal: 8 }}
+                  />
+                  <Text className="text-green-500">{debt.lender}</Text>
+                </View>
+                <Text className="text-lg font-bold text-white">
+                  ₪{debt.amount}
+                </Text>
+              </View>
+            ))
+          ) : (
+            <Text className="text-white text-center mt-3">
+              No transactions to show.
+            </Text>
+          )}
+        </View>
       </ScrollView>
+
+      {/* GoBackButton is fixed at the bottom */}
       <GoBackButton />
     </View>
   );
