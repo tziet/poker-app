@@ -18,6 +18,8 @@ type ConfirmFormProps = {
 const ConfirmForm: React.FC<ConfirmFormProps> = (data: ConfirmFormProps) => {
   return (
     <View className="bg-white p-6 rounded-2xl w-4/5">
+      <Text className="text-gray-700">Are you sure?</Text>
+
       <View className="flex-row justify-between mt-4">
         <TouchableOpacity
           onPress={() => data.setModalVisible(false)}
@@ -30,7 +32,7 @@ const ConfirmForm: React.FC<ConfirmFormProps> = (data: ConfirmFormProps) => {
           onPress={() => data.onConfirm(data.id)}
           className="px-4 py-2 rounded-lg bg-blue-500"
         >
-          <Text className="text-white font-bold">Delete</Text>
+          <Text className="text-white font-bold">Confirm</Text>
         </TouchableOpacity>
       </View>
     </View>

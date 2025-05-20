@@ -33,7 +33,7 @@ export default function Sessions() {
         >
           <Image
             source={icons.logo}
-            className="w-12 h-10 top-10 mt-20 mx-auto self-center z-50"
+            className="w-12 h-10 mt-20 mx-auto self-center z-50"
             resizeMode="contain"
             tintColor="white"
           />
@@ -48,7 +48,7 @@ export default function Sessions() {
           {/*) : (*/}
           {/*  <View className="flex-1 mt-5">*/}
           {/*    <SearchBar*/}
-          {/*      onPress={() => router.push("/table")}*/}
+          {/*      onPress={() => router.push("/profile")}*/}
           {/*      placeholder="Search for something"*/}
           {/*    />*/}
           {/*    <>*/}

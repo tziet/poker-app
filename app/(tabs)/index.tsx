@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useState, useEffect } from "react";
 import {
   View,
   Image,
@@ -10,7 +10,6 @@ import {
 } from "react-native";
 import { images } from "@/constants/images";
 import CreatePlayerForm from "@/components/modals/CreatePlayerForm";
-import { useEffect } from "react";
 import { Query } from "appwrite";
 import { createPlayer, deletePlayer, getAllPlayers } from "@/services/appwrite";
 import { icons } from "@/constants/icons";
@@ -144,26 +143,11 @@ const Table = () => {
     }
   };
 
-  const handleDeletePlayer = async (id: string) => {
-    if (selectedPosition === null) return;
-
-    try {
-      await deletePlayer(id);
-      const updated = [...players];
-      updated[selectedPosition] = null;
-      setPlayers(updated);
-      router.back;
-    } catch (err) {
-      console.error("Error deleting player:", err);
-      alert("Error deleting player");
-    }
-  };
-
   return (
     <View className="flex-1 bg-primary relative">
       <Image
         source={icons.logo}
-        className="w-12 h-10 absolute top-10 mt-20 mx-auto self-center"
+        className="w-12 h-10 absolute mt-20 mx-auto self-center"
         resizeMode="contain"
         tintColor="white"
       />

@@ -88,3 +88,14 @@ export const updatePlayer = async (
 export const deletePlayer = async (id: string): Promise<void> => {
   await databases.deleteDocument(DATABASE_ID, COLLECTION_ID, id);
 };
+
+export const getTableMoneySum = async (): Promise<number> => {
+  const response = await databases.listDocuments(DATABASE_ID, COLLECTION_ID);
+  let moneySum = 0;
+
+  response.documents.map((doc) => {
+    moneySum += doc.chips;
+  });
+
+  return moneySum;
+};
