@@ -11,11 +11,7 @@ import { router, useLocalSearchParams } from "expo-router";
 import GoBackButton from "@/components/GoBackButton";
 import ConfirmForm from "@/components/modals/ConfirmForm";
 import EditAttributeForm from "@/components/modals/EditAttributeForm";
-import {
-  deletePlayer,
-  getPlayerDetails,
-  updatePlayer,
-} from "@/services/appwrite";
+import { deletePlayer, getPlayerDetails, updatePlayer } from "@/firebase";
 import { icons } from "@/constants/icons";
 
 const PlayerDetails = () => {
@@ -29,8 +25,8 @@ const PlayerDetails = () => {
   useEffect(() => {
     const fetchPlayerDetails = async () => {
       const details = await getPlayerDetails(playerId);
-      if (details && details.length > 0) {
-        setPlayer(details[0]);
+      if (details) {
+        setPlayer(details);
       }
     };
     fetchPlayerDetails();

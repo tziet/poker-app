@@ -2,8 +2,7 @@ import React, { useState, useEffect } from "react";
 import { View, Text, Image, ScrollView, TextInput } from "react-native";
 import { icons } from "@/constants/icons";
 import GoBackButton from "@/components/GoBackButton";
-import { getAllPlayers, getTableMoneySum } from "@/services/appwrite";
-import { Query } from "appwrite";
+import { getAllPlayers, getTableMoneySum } from "@/firebase";
 import { Ionicons } from "@expo/vector-icons";
 
 const MoneySummary = () => {
@@ -25,7 +24,7 @@ const MoneySummary = () => {
         const moneyResponse = await getTableMoneySum();
         setMoneySum(moneyResponse);
 
-        const playersResponse = await getAllPlayers([Query.orderAsc("seat")]);
+        const playersResponse = await getAllPlayers();
         setPlayers(playersResponse);
 
         const initialCurrentChips: { [id: string]: number } = {};

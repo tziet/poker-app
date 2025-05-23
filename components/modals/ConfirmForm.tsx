@@ -7,7 +7,7 @@ import {
   TouchableOpacity,
 } from "react-native";
 import { router } from "expo-router";
-import { deletePlayer } from "@/services/appwrite";
+import { deletePlayer } from "@/firebase";
 
 type ConfirmFormProps = {
   id: string;

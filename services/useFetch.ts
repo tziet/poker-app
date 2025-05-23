@@ -1,7 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
 import { useFocusEffect } from "@react-navigation/native";
-import { getAllPlayers } from "@/services/appwrite";
-import { Query } from "appwrite";
 
 const useFetch = <T>(fetchFunction: () => Promise<T>, autoFetch = true) => {
   const [data, setData] = useState<T | null>(null);

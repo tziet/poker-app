@@ -7,7 +7,7 @@ import {
   TextInput,
   TouchableOpacity,
 } from "react-native";
-import { getPlayerDetails } from "@/services/appwrite";
+import { getPlayerDetails } from "@/firebase";
 
 type EditFormProps = {
   id: string;
@@ -22,9 +22,9 @@ const EditAttributeForm = ({ id, onClose, onSubmit }: EditFormProps) => {
   useEffect(() => {
     const fetchPlayerDetails = async () => {
       const details = await getPlayerDetails(id);
-      if (details && details.length > 0) {
-        setName(details[0].name);
-        setChips(details[0].chips.toString());
+      if (details) {
+        setName(details.name);
+        setChips(details.chips.toString());
       } else {
         console.warn("No player found for this ID:", id);
       }

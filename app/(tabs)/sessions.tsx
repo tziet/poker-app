@@ -11,8 +11,6 @@ import { icons } from "@/constants/icons";
 import SearchBar from "@/components/SearchBar";
 import { useRouter } from "expo-router";
 import useFetch from "@/services/useFetch";
-import { fetchMovies } from "@/services/api";
-import MovieCard from "@/components/MovieCard";
 
 export default function Sessions() {
   const router = useRouter();

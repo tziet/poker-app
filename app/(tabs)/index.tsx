@@ -10,13 +10,11 @@ import {
 } from "react-native";
 import { images } from "@/constants/images";
 import CreatePlayerForm from "@/components/modals/CreatePlayerForm";
-import { Query } from "appwrite";
-import { createPlayer, deletePlayer, getAllPlayers } from "@/services/appwrite";
+import { createPlayer, deletePlayer, getAllPlayers } from "@/firebase";
 import { icons } from "@/constants/icons";
 import { Link, useRouter } from "expo-router";
 import { useFocusEffect } from "@react-navigation/native";
 import useFetch from "@/services/useFetch";
-import { fetchMovies } from "@/services/api";
 
 type NewPlayerButtonProps = {
   onPress: () => void;
@@ -47,8 +45,7 @@ const Table = () => {
   useEffect(() => {
     const loadPlayers = async () => {
       try {
-        const response = await getAllPlayers([Query.orderAsc("seat")]);
-
+        const response = await getAllPlayers();
         setPlayers(response);
       } catch (err) {
         console.error("Error loading players:", err);
@@ -62,8 +59,7 @@ const Table = () => {
     useCallback(() => {
       const loadPlayers = async () => {
         try {
-          const response = await getAllPlayers([Query.orderAsc("seat")]);
-
+          const response = await getAllPlayers();
           setPlayers(response);
         } catch (err) {
           console.error("Error loading players:", err);
