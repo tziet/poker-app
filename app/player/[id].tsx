@@ -131,7 +131,6 @@ const PlayerDetails = () => {
       <Modal visible={confirmModalVisible} animationType="slide" transparent>
         <View className="flex-1 justify-center items-center bg-black/70">
           <ConfirmForm
-            id={playerId}
             setModalVisible={setConfirmModalVisible}
             onConfirm={handleDeletePlayer}
           />

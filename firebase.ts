@@ -30,9 +30,24 @@ export const createPlayer = async (data: NewPlayer): Promise<Player> => {
   const docRef = await addDoc(collection(db, "players"), data); // "players" is the Firestore collection name
   return {
     $id: docRef.id,
-    sessionId: "", // Add a default or relevant sessionId value here
     ...data,
   };
+};
+
+export const createSession = async (data: NewSession): Promise<Session> => {
+  const docRef = await addDoc(collection(db, "sessions"), data); // "sessions" is the Firestore collection name
+  return {
+    $id: docRef.id,
+    ...data,
+  };
+};
+
+export const getActiveSession = async (): Promise<Session | null> => {
+  const querySnapshot = await getDocs(collection(db, "sessions"));
+  const activeSession = querySnapshot.docs.find(
+    (doc) => doc.data().isActive == true,
+  );
+  return activeSession?.data() as Session | null;
 };
 
 export const getPlayerDetails = async (id: string): Promise<Player | null> => {

@@ -10,14 +10,16 @@ interface NewPlayer {
   name: string;
   chips: number;
   seat: number | null;
+  sessionId: string;
 }
 
 interface Session {
   $id: string;
-  date: string;
-  name: string;
+  date: Date;
+  isActive: boolean;
 }
 
 interface NewSession {
-  name: string;
+  date: Date;
+  isActive: boolean;
 }

@@ -10,9 +10,8 @@ import { router } from "expo-router";
 import { deletePlayer } from "@/firebase";
 
 type ConfirmFormProps = {
-  id: string;
   setModalVisible: React.Dispatch<React.SetStateAction<boolean>>;
-  onConfirm: (id: string) => void;
+  onConfirm: () => void;
 };
 
 const ConfirmForm: React.FC<ConfirmFormProps> = (data: ConfirmFormProps) => {
@@ -29,7 +28,7 @@ const ConfirmForm: React.FC<ConfirmFormProps> = (data: ConfirmFormProps) => {
         </TouchableOpacity>
 
         <TouchableOpacity
-          onPress={() => data.onConfirm(data.id)}
+          onPress={() => data.onConfirm()}
           className="px-4 py-2 rounded-lg bg-blue-500"
         >
           <Text className="text-white font-bold">Confirm</Text>

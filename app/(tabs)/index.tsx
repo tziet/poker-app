@@ -10,11 +10,17 @@ import {
 } from "react-native";
 import { images } from "@/constants/images";
 import CreatePlayerForm from "@/components/modals/CreatePlayerForm";
-import { createPlayer, deletePlayer, getAllPlayers } from "@/firebase";
+import {
+  createPlayer,
+  getAllPlayers,
+  createSession,
+  getActiveSession,
+} from "@/firebase";
 import { icons } from "@/constants/icons";
 import { Link, useRouter } from "expo-router";
 import { useFocusEffect } from "@react-navigation/native";
 import useFetch from "@/services/useFetch";
+import ConfirmForm from "@/components/modals/ConfirmForm";
 
 type NewPlayerButtonProps = {
   onPress: () => void;
@@ -29,8 +35,9 @@ type UserButtonProps = {
 
 const Table = () => {
   const router = useRouter();
-
   const [createModalVisible, setCreateModalVisible] = useState(false);
+  const [confirmModalVisible, setConfirmModalVisible] = useState(false);
+  const [session, setSession] = useState<Session | null>(null);
   const [players, setPlayers] = useState<(Player | null)[]>(
     Array(8).fill(null),
   );
@@ -43,16 +50,32 @@ const Table = () => {
   // } = useFetch(() => getAllPlayers([Query.orderAsc("seat")]));
 
   useEffect(() => {
-    const loadPlayers = async () => {
-      try {
-        const response = await getAllPlayers();
-        setPlayers(response);
-      } catch (err) {
-        console.error("Error loading players:", err);
-      }
-    };
+    if (session === null) {
+      const loadSession = async () => {
+        try {
+          const response = await getActiveSession();
+          setSession(response);
+        } catch (err) {
+          console.error("Error loading session:", err);
+        }
+      };
+      loadSession();
+    }
+  }, []);
 
-    loadPlayers();
+  useEffect(() => {
+    if (session) {
+      const loadPlayers = async () => {
+        try {
+          const response = await getAllPlayers();
+          setPlayers(response);
+        } catch (err) {
+          console.error("Error loading players:", err);
+        }
+      };
+
+      loadPlayers();
+    }
   }, []);
 
   useFocusEffect(
@@ -126,7 +149,10 @@ const Table = () => {
     if (selectedPosition === null) return;
 
     try {
-      const newPlayer = await createPlayer(data);
+      const newPlayer = await createPlayer({
+        ...data,
+        sessionId: session?.$id || "",
+      });
 
       const updated = [...players];
       updated[selectedPosition] = newPlayer;
@@ -136,6 +162,20 @@ const Table = () => {
     } catch (err) {
       console.error("Error creating player:", err);
       alert("Error saving player");
+    }
+  };
+
+  const handleCreateSession = async () => {
+    try {
+      const newSession = await createSession({
+        date: new Date(),
+        isActive: true,
+      });
+      setConfirmModalVisible(false);
+      setSession(newSession);
+    } catch (err) {
+      console.error("Error creating session:", err);
+      alert("Error creating session");
     }
   };
 
@@ -150,33 +190,44 @@ const Table = () => {
 
       <MoneyButton />
 
-      <View className="flex-1 justify-center items-center">
-        <Image
-          source={images.pTable}
-          className="w-64 h-64 z-0 rotate-90"
-          resizeMode="contain"
-          tintColor="white"
-        />
-      </View>
+      {session ? (
+        <View className="flex-1 justify-center items-center">
+          <Image
+            source={images.pTable}
+            className="w-64 h-64 z-0 rotate-90"
+            resizeMode="contain"
+            tintColor="white"
+          />
 
-      {positions.map((style, i) =>
-        !players[i] ? (
+          {positions.map((style, i) =>
+            !players[i] ? (
+              <NewPlayerButton
+                key={i}
+                onPress={() => {
+                  setSelectedPosition(i);
+                  setCreateModalVisible(true);
+                }}
+                style={style}
+              />
+            ) : (
+              <UserButton
+                key={i}
+                player={players[i]}
+                style={style}
+                id={players[i].$id}
+              />
+            ),
+          )}
+        </View>
+      ) : (
+        <View className="flex-1 justify-center items-center">
           <NewPlayerButton
-            key={i}
+            key="newSessionButton"
             onPress={() => {
-              setSelectedPosition(i);
-              setCreateModalVisible(true);
+              setConfirmModalVisible(true);
             }}
-            style={style}
           />
-        ) : (
-          <UserButton
-            key={i}
-            player={players[i]}
-            style={style}
-            id={players[i].$id}
-          />
-        ),
+        </View>
       )}
 
       <Modal visible={createModalVisible} transparent animationType="slide">
@@ -185,6 +236,14 @@ const Table = () => {
             onClose={() => setCreateModalVisible(false)}
             onSubmit={handleCreatePlayer}
             selectedSeat={selectedPosition}
+          />
+        </View>
+      </Modal>
+      <Modal visible={confirmModalVisible} animationType="slide" transparent>
+        <View className="flex-1 justify-center items-center bg-black/70">
+          <ConfirmForm
+            setModalVisible={setConfirmModalVisible}
+            onConfirm={handleCreateSession}
           />
         </View>
       </Modal>
