@@ -6,16 +6,18 @@ import {
   Text,
   View,
 } from "react-native";
+import React, { useCallback, useState, useEffect } from "react";
 import { images } from "@/constants/images";
 import { icons } from "@/constants/icons";
 import SearchBar from "@/components/SearchBar";
 import { useRouter } from "expo-router";
 import useFetch from "@/services/useFetch";
-import { fetchMovies } from "@/services/api";
-import MovieCard from "@/components/MovieCard";
+import { getActiveSession, getAllSessions } from "@/firebase";
+import { useSessionContext } from "@/contexts/SessionContext";
 
 export default function Sessions() {
   const router = useRouter();
+  const { sessions } = useSessionContext();
 
   // const {
   //   data: movies,
@@ -33,7 +35,7 @@ export default function Sessions() {
         >
           <Image
             source={icons.logo}
-            className="w-12 h-10 top-10 mt-20 mx-auto self-center z-50"
+            className="w-12 h-10 mt-20 mx-auto self-center z-50"
             resizeMode="contain"
             tintColor="white"
           />
@@ -48,27 +50,42 @@ export default function Sessions() {
           {/*) : (*/}
           {/*  <View className="flex-1 mt-5">*/}
           {/*    <SearchBar*/}
-          {/*      onPress={() => router.push("/table")}*/}
+          {/*      onPress={() => router.push("/profile")}*/}
           {/*      placeholder="Search for something"*/}
           {/*    />*/}
           {/*    <>*/}
           {/*      <Text className="text-ig text-white font-bold mt-5 mb-3">*/}
           {/*        Latest Movies*/}
           {/*      </Text>*/}
-          {/*      <FlatList*/}
-          {/*        data={movies}*/}
-          {/*        renderItem={({ item }) => <MovieCard {...item} />}*/}
-          {/*        keyExtractor={(item) => item.id.toString()}*/}
-          {/*        numColumns={3}*/}
-          {/*        columnWrapperStyle={{*/}
-          {/*          justifyContent: "flex-start",*/}
-          {/*          gap: 20,*/}
-          {/*          paddingRight: 5,*/}
-          {/*          marginBottom: 10,*/}
-          {/*        }}*/}
-          {/*        className="mt-2 pb-32"*/}
-          {/*        scrollEnabled={false}*/}
-          {/*      ></FlatList>*/}
+          <FlatList
+            data={sessions}
+            renderItem={({ item }) => (
+              <View>
+                <Text className="text-white">
+                  {item?.date.toDate().toLocaleString("en-IL", {
+                    timeZone: "Asia/Jerusalem",
+                    month: "numeric",
+                    day: "numeric",
+                    year: "numeric",
+                    hour: "numeric",
+                    minute: "2-digit",
+                  })}
+                </Text>
+              </View>
+            )}
+            keyExtractor={(item) => item?.$id?.toString() ?? ""}
+            numColumns={2}
+            columnWrapperStyle={{
+              justifyContent: "flex-start",
+              gap: 80,
+              paddingRight: 30,
+              paddingLeft: 30,
+              marginBottom: 80,
+              paddingTop: 50,
+            }}
+            className="mt-2 pb-32"
+            scrollEnabled={false}
+          ></FlatList>
           {/*    </>*/}
           {/*  </View>*/}
           {/*)}*/}

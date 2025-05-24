@@ -52,20 +52,10 @@ const _Layout = () => {
       <Tabs.Screen
         name="index"
         options={{
-          title: "Home",
-          headerShown: false,
-          tabBarIcon: ({ focused }) => (
-            <TabIcon focused={focused} icon={icons.home} title="Home" />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="table"
-        options={{
           title: "Table",
           headerShown: false,
           tabBarIcon: ({ focused }) => (
-            <TabIcon focused={focused} icon={icons.table} title="Table" />
+            <TabIcon focused={focused} icon={icons.home} title="Table" />
           ),
         }}
       />

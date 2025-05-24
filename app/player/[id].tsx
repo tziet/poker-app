@@ -1,193 +1,167 @@
-import {
-  Image,
-  Modal,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from "react-native";
 import React, { useEffect, useState } from "react";
+import { View, Text, TouchableOpacity, Modal, Image } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
-import { icons } from "@/constants/icons";
-import {
-  deletePlayer,
-  getPlayerDetails,
-  updatePlayer,
-} from "@/services/appwrite";
 import GoBackButton from "@/components/GoBackButton";
 import ConfirmForm from "@/components/modals/ConfirmForm";
 import EditAttributeForm from "@/components/modals/EditAttributeForm";
+import { deletePlayer, getPlayerDetails, updatePlayer } from "@/firebase";
+import { icons } from "@/constants/icons";
 
-interface PlayerInfoProps {
-  label: string;
-  value?: string | number | null;
-  isEditable?: boolean;
-  setModalVisible?: React.Dispatch<React.SetStateAction<boolean>>;
-}
-
-const PlayerInfo = ({
-  label,
-  value,
-  isEditable,
-  setModalVisible,
-}: PlayerInfoProps) => {
-  return (
-    <View className="flex-col items-start justify-center mt-5">
-      <Text className="text-white font-bold text-xl underline">{label}</Text>
-      <Text className="text-white font-normal text-xl mt-1">
-        {value || "N/A"}
-      </Text>
-      {/*{isEditable && setModalVisible && (*/}
-      {/*  <TouchableOpacity*/}
-      {/*    className="left-0 right-0 bg-accent rounded-lg py-3.5 flex flex-row items-center justify-center "*/}
-      {/*    onPress={() => setModalVisible(true)}*/}
-      {/*  >*/}
-      {/*    <Image*/}
-      {/*      source={icons.edit}*/}
-      {/*      className="size-5 mr-1 mt-0.5 rotate-180"*/}
-      {/*      tintColor="#fff"*/}
-      {/*    />*/}
-      {/*    <Text className="text-black font-semibold text-base">Edit</Text>*/}
-      {/*  </TouchableOpacity>*/}
-      {/*)}*/}
-    </View>
-  );
-};
-
-const Details = () => {
+const PlayerDetails = () => {
   const { id } = useLocalSearchParams();
   const [player, setPlayer] = useState<Player | null>(null);
   const [confirmModalVisible, setConfirmModalVisible] = useState(false);
   const [editModalVisible, setEditModalVisible] = useState(false);
 
-  let playerId: string = "";
-  if (id) {
-    playerId = Array.isArray(id) ? id[0] : id;
-  }
-
-  const handleDeletePlayer = async (id: string) => {
-    try {
-      await deletePlayer(id);
-      router.back();
-      alert("Player has been deleted");
-    } catch (err) {
-      console.error("Error deleting player:", err);
-      alert("Error deleting player");
-    }
-  };
-
-  const handleEditPlayer = async (name: string, chips: number) => {
-    const updatedPlayer = player;
-    if (updatedPlayer) {
-      updatedPlayer.name = name;
-      updatedPlayer.chips = chips;
-      setPlayer(updatedPlayer);
-    }
-
-    if (updatedPlayer === null) return;
-    try {
-      await updatePlayer(playerId, updatedPlayer);
-
-      setEditModalVisible(false);
-    } catch (err) {
-      console.error("Error updating player:", err);
-      alert("Error updating player");
-    }
-  };
+  const playerId = typeof id === "string" ? id : id?.[0] || "";
 
   useEffect(() => {
     const fetchPlayerDetails = async () => {
       const details = await getPlayerDetails(playerId);
-      if (details && details.length > 0) {
-        setPlayer(details[0]);
+      if (details) {
+        setPlayer(details);
       }
     };
-
     fetchPlayerDetails();
-  }, [id, player]);
+  }, [id]);
+
+  const handleDeletePlayer = async () => {
+    try {
+      await deletePlayer(playerId);
+      router.back();
+      setConfirmModalVisible(false);
+      alert(`Player ${player?.name} has been deleted.`);
+    } catch (err) {
+      console.error("Error deleting player:", err);
+      alert("Error deleting player!");
+    }
+  };
+
+  const handleEditPlayer = async (
+    updatedName: string,
+    updatedChips: number,
+  ) => {
+    const updatedPlayer = {
+      name: updatedName,
+      chips: updatedChips,
+      $id: player!.$id,
+      seat: player?.seat ?? null,
+      sessionId: player!.sessionId,
+    };
+
+    try {
+      await updatePlayer(playerId, updatedPlayer);
+      setPlayer(updatedPlayer);
+      setEditModalVisible(false);
+      alert(`Player ${player?.name} updated successfully.`);
+    } catch (err) {
+      console.error("Error updating player:", err);
+      alert("Failed to update player.");
+    }
+  };
 
   return (
     <View className="flex-1 bg-primary">
-      <View>
+      <View className="items-center mt-10">
         <Image
           source={icons.user}
-          tintColor="white"
-          className="w-12 h-10 mt-20 mb-5 mx-auto"
+          className="w-16 h-16"
           resizeMode="contain"
+          tintColor="#fff"
         />
+        <Text className="text-white text-2xl font-bold mt-2">
+          {player?.name || "Player Details"}
+        </Text>
       </View>
-      <View className="flex-col items-start justify-center mt-5 px-5">
+
+      <View className="px-5 py-4 mt-10">
         <PlayerInfo
           label="Name"
           value={player?.name}
-          isEditable={true}
-          setModalVisible={setEditModalVisible}
+          onEdit={() => setEditModalVisible(true)}
         />
         <PlayerInfo
           label="Chips"
-          value={player?.chips}
-          isEditable={true}
-          setModalVisible={setEditModalVisible}
+          value={player?.chips?.toString()}
+          onEdit={() => setEditModalVisible(true)}
         />
         <PlayerInfo
           label="Seat"
-          value={player?.seat != null ? player.seat + 1 : "N/A"}
+          value={player?.seat != null ? (player.seat + 1).toString() : "N/A"}
         />
+      </View>
+
+      <View className="mt-8 px-5">
         <TouchableOpacity
-          className="left-0 right-0 bg-accent rounded-lg py-3.5 flex flex-row items-center justify-center "
+          className="bg-orange-500 rounded-lg py-3 mb-4 flex-row items-center justify-center"
           onPress={() => setEditModalVisible(true)}
         >
           <Image
             source={icons.edit}
-            className="size-5 mr-1 mt-0.5"
+            className="w-5 h-5 mr-1"
             tintColor="#fff"
           />
-          <Text className="text-black font-semibold text-base">Edit</Text>
+          <Text className="text-white font-semibold text-lg">Edit Player</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          className="bg-red-900 rounded-lg py-3 mb-6 flex-row items-center justify-center"
+          onPress={() => setConfirmModalVisible(true)}
+        >
+          <Image
+            source={icons.removeUser}
+            className="w-6 h-6 mr-2"
+            tintColor="#fff"
+          />
+          <Text className="text-white font-bold text-lg">Delete Player</Text>
         </TouchableOpacity>
       </View>
-      <TouchableOpacity
-        className="left-0 right-0 bg-red-900 rounded-lg py-3.5 flex flex-row items-center justify-center mt-20"
-        onPress={() => setConfirmModalVisible(true)}
-      >
-        <Text className="text-white font-bold justify-center items-center self-center">
-          Delete
-        </Text>
-        <Image
-          source={icons.removeUser}
-          tintColor="white"
-          className="w-12 h-10 mt-20 mb-5 mx-auto"
-          resizeMode="contain"
-        />
-      </TouchableOpacity>
 
-      <GoBackButton />
-
-      <Modal
-        visible={confirmModalVisible || editModalVisible}
-        transparent
-        animationType="slide"
-      >
-        <View className="flex-1 justify-center items-center bg-black/60">
-          {confirmModalVisible && (
-            <ConfirmForm
-              id={playerId}
-              setModalVisible={setConfirmModalVisible}
-            />
-          )}
-          {editModalVisible && (
-            <EditAttributeForm
-              id={playerId}
-              onClose={() => setEditModalVisible(false)}
-              onSubmit={handleEditPlayer}
-            />
-          )}
+      <Modal visible={confirmModalVisible} animationType="slide" transparent>
+        <View className="flex-1 justify-center items-center bg-black/70">
+          <ConfirmForm
+            setModalVisible={setConfirmModalVisible}
+            onConfirm={handleDeletePlayer}
+          />
         </View>
       </Modal>
+
+      <Modal visible={editModalVisible} animationType="slide" transparent>
+        <View className="flex-1 justify-center items-center bg-black/70">
+          <EditAttributeForm
+            id={playerId}
+            onClose={() => setEditModalVisible(false)}
+            onSubmit={handleEditPlayer}
+          />
+        </View>
+      </Modal>
+
+      <GoBackButton />
     </View>
   );
 };
 
-export default Details;
+const PlayerInfo = ({
+  label,
+  value,
+  onEdit,
+}: {
+  label: string;
+  value?: string;
+  onEdit?: () => void;
+}) => (
+  <View className="bg-gray-800 rounded-lg p-4 mb-4 shadow-lg">
+    <Text className="text-white font-semibold text-lg mb-1">{label}</Text>
+    <Text className="text-white text-base">{value || "N/A"}</Text>
+    {onEdit && (
+      <TouchableOpacity
+        onPress={onEdit}
+        className="bg-blue-500 px-3 py-2 rounded-md mt-2 self-start"
+      >
+        <Text className="text-white text-sm">Edit</Text>
+      </TouchableOpacity>
+    )}
+  </View>
+);
 
-const styles = StyleSheet.create({});
+export default PlayerDetails;

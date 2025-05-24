@@ -3,7 +3,11 @@ import { View, Text, TextInput, TouchableOpacity } from "react-native";
 
 type Props = {
   onClose: () => void;
-  onSubmit: (data: NewPlayer) => void;
+  onSubmit: (data: {
+    name: string;
+    chips: number;
+    seat: number | null;
+  }) => void;
   selectedSeat: number | null;
 };
 
