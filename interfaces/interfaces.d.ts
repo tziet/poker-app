@@ -15,7 +15,7 @@ interface NewPlayer {
 
 interface Session {
   $id: string;
-  date: Date;
+  date: firebase.firestore.Timestamp;
   isActive: boolean;
 }
 

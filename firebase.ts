@@ -8,6 +8,7 @@ import {
   deleteDoc,
   query,
   orderBy,
+  where,
 } from "firebase/firestore";
 import { initializeApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
@@ -34,22 +35,6 @@ export const createPlayer = async (data: NewPlayer): Promise<Player> => {
   };
 };
 
-export const createSession = async (data: NewSession): Promise<Session> => {
-  const docRef = await addDoc(collection(db, "sessions"), data); // "sessions" is the Firestore collection name
-  return {
-    $id: docRef.id,
-    ...data,
-  };
-};
-
-export const getActiveSession = async (): Promise<Session | null> => {
-  const querySnapshot = await getDocs(collection(db, "sessions"));
-  const activeSession = querySnapshot.docs.find(
-    (doc) => doc.data().isActive == true,
-  );
-  return activeSession?.data() as Session | null;
-};
-
 export const getPlayerDetails = async (id: string): Promise<Player | null> => {
   const docRef = doc(db, "players", id); // "players" is the Firestore collection name
   const docSnap = await getDoc(docRef);
@@ -65,15 +50,23 @@ export const getPlayerDetails = async (id: string): Promise<Player | null> => {
   } as Player;
 };
 
-export const getAllPlayers = async (): Promise<(Player | null)[]> => {
+export const getAllPlayers = async (
+  sessionId: string,
+): Promise<(Player | null)[]> => {
+  if (!sessionId || sessionId === "") {
+    throw new Error("Invalid sessionId provided to getAllPlayers");
+  }
+
   const playersRef = collection(db, "players");
-  const q = query(playersRef, orderBy("seat", "asc")); // Order players by seat number
+  const q = query(
+    playersRef,
+    orderBy("seat", "asc"),
+    where("sessionId", "==", sessionId),
+  );
 
   const snapshot = await getDocs(q);
 
-  // Create an array with 8 null entries (one for each seat)
   const data = Array(8).fill(null);
-
   snapshot.docs.forEach((doc) => {
     const player = {
       $id: doc.id,
@@ -81,7 +74,7 @@ export const getAllPlayers = async (): Promise<(Player | null)[]> => {
     } as Player;
 
     if (player.seat !== null && player.seat >= 0 && player.seat < 8) {
-      data[player.seat] = player; // Place player based on their "seat"
+      data[player.seat] = player;
     }
   });
 
@@ -101,8 +94,16 @@ export const deletePlayer = async (id: string): Promise<void> => {
   await deleteDoc(docRef); // Delete the document
 };
 
-export const getTableMoneySum = async (): Promise<number> => {
-  const querySnapshot = await getDocs(collection(db, "players"));
+export const getTableMoneySum = async (session: Session): Promise<number> => {
+  const playersRef = collection(db, "players");
+  const q = query(
+    playersRef,
+    orderBy("seat", "asc"),
+    where("sessionId", "==", session.$id),
+  );
+
+  const querySnapshot = await getDocs(q);
+
   let moneySum = 0;
 
   querySnapshot.docs.forEach((doc) => {
@@ -111,4 +112,54 @@ export const getTableMoneySum = async (): Promise<number> => {
   });
 
   return moneySum;
+};
+
+export const createSession = async (data: NewSession): Promise<Session> => {
+  const docRef = await addDoc(collection(db, "sessions"), data); // "sessions" is the Firestore collection name
+  return {
+    $id: docRef.id,
+    ...data,
+  };
+};
+
+export const getActiveSession = async (): Promise<Session | null> => {
+  const querySnapshot = await getDocs(collection(db, "sessions"));
+  const activeSessionDoc = querySnapshot.docs.find(
+    (doc) => doc.data().isActive == true,
+  );
+
+  if (!activeSessionDoc) {
+    return null; // No active session found
+  }
+
+  const activeSessionData = activeSessionDoc.data();
+  return {
+    $id: activeSessionDoc.id, // Include the document ID
+    ...activeSessionData,
+  } as Session;
+};
+
+export const getAllSessions = async (): Promise<(Session | null)[]> => {
+  const playersRef = collection(db, "sessions");
+  const q = query(playersRef, orderBy("date", "asc")); // Order players by seat number
+
+  const snapshot = await getDocs(q);
+
+  const data: (Session | null)[] = [];
+  snapshot.docs.map((doc, index) => {
+    data[index] = {
+      $id: doc.id,
+      ...doc.data(),
+    } as Session;
+  });
+
+  return data;
+};
+
+export const updateSession = async (
+  id: string,
+  session: Session,
+): Promise<void> => {
+  const docRef = doc(db, "sessions", id); // "sessions" is the Firestore collection name
+  await updateDoc(docRef, { ...session }); // Update the document with the new session data
 };

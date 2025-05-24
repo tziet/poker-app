@@ -1,12 +1,5 @@
 import React, { useEffect, useState } from "react";
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  Modal,
-  Image,
-  StyleSheet,
-} from "react-native";
+import { View, Text, TouchableOpacity, Modal, Image } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
 import GoBackButton from "@/components/GoBackButton";
 import ConfirmForm from "@/components/modals/ConfirmForm";
@@ -49,11 +42,11 @@ const PlayerDetails = () => {
     updatedChips: number,
   ) => {
     const updatedPlayer = {
-      ...player,
       name: updatedName,
       chips: updatedChips,
       $id: player!.$id,
       seat: player?.seat ?? null,
+      sessionId: player!.sessionId,
     };
 
     try {
@@ -69,7 +62,6 @@ const PlayerDetails = () => {
 
   return (
     <View className="flex-1 bg-primary">
-      {/* Header and Icon */}
       <View className="items-center mt-10">
         <Image
           source={icons.user}
@@ -82,7 +74,6 @@ const PlayerDetails = () => {
         </Text>
       </View>
 
-      {/* Player Info Section */}
       <View className="px-5 py-4 mt-10">
         <PlayerInfo
           label="Name"
@@ -100,7 +91,6 @@ const PlayerDetails = () => {
         />
       </View>
 
-      {/* Actions */}
       <View className="mt-8 px-5">
         <TouchableOpacity
           className="bg-orange-500 rounded-lg py-3 mb-4 flex-row items-center justify-center"
@@ -127,7 +117,6 @@ const PlayerDetails = () => {
         </TouchableOpacity>
       </View>
 
-      {/* Modals */}
       <Modal visible={confirmModalVisible} animationType="slide" transparent>
         <View className="flex-1 justify-center items-center bg-black/70">
           <ConfirmForm

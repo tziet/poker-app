@@ -15,12 +15,15 @@ import {
   getAllPlayers,
   createSession,
   getActiveSession,
+  updatePlayer,
+  updateSession,
 } from "@/firebase";
 import { icons } from "@/constants/icons";
-import { Link, useRouter } from "expo-router";
+import { Link } from "expo-router";
 import { useFocusEffect } from "@react-navigation/native";
 import useFetch from "@/services/useFetch";
 import ConfirmForm from "@/components/modals/ConfirmForm";
+import { useSessionContext } from "@/contexts/SessionContext";
 
 type NewPlayerButtonProps = {
   onPress: () => void;
@@ -34,9 +37,18 @@ type UserButtonProps = {
 };
 
 const Table = () => {
-  const router = useRouter();
-  const [createModalVisible, setCreateModalVisible] = useState(false);
-  const [confirmModalVisible, setConfirmModalVisible] = useState(false);
+  const { reloadSessions } = useSessionContext();
+
+  const [createPlayerModalVisible, setCreatePlayerModalVisible] =
+    useState(false);
+  const [
+    createSessionConfirmModalVisible,
+    setCreateSessionConfirmModalVisible,
+  ] = useState(false);
+  const [
+    archiveSessionConfirmModalVisible,
+    setArchiveSessionConfirmModalVisible,
+  ] = useState(false);
   const [session, setSession] = useState<Session | null>(null);
   const [players, setPlayers] = useState<(Player | null)[]>(
     Array(8).fill(null),
@@ -50,24 +62,34 @@ const Table = () => {
   // } = useFetch(() => getAllPlayers([Query.orderAsc("seat")]));
 
   useEffect(() => {
-    if (session === null) {
-      const loadSession = async () => {
-        try {
-          const response = await getActiveSession();
+    const loadSession = async () => {
+      console.log("Checking for an active session...");
+
+      try {
+        const response = await getActiveSession();
+        if (response) {
+          console.log("Active session loaded:", response);
           setSession(response);
-        } catch (err) {
-          console.error("Error loading session:", err);
+        } else {
+          console.warn("No active session found.");
+          setSession(null);
         }
-      };
-      loadSession();
-    }
+      } catch (err) {
+        console.error("Error loading session:", err);
+        setSession(null); // Ensure session is reset on error
+      }
+    };
+
+    loadSession();
   }, []);
 
   useEffect(() => {
-    if (session) {
+    if (session?.$id) {
       const loadPlayers = async () => {
+        console.log("Checking for an active players...");
+
         try {
-          const response = await getAllPlayers();
+          const response = await getAllPlayers(session.$id);
           setPlayers(response);
         } catch (err) {
           console.error("Error loading players:", err);
@@ -75,22 +97,30 @@ const Table = () => {
       };
 
       loadPlayers();
+    } else {
+      console.warn("No session ID available to fetch players.");
     }
-  }, []);
+  }, [session]);
 
   useFocusEffect(
     useCallback(() => {
-      const loadPlayers = async () => {
-        try {
-          const response = await getAllPlayers();
-          setPlayers(response);
-        } catch (err) {
-          console.error("Error loading players:", err);
-        }
-      };
+      if (session?.$id) {
+        const loadPlayers = async () => {
+          console.log("Checking for an active players - useFocusEffect...");
 
-      loadPlayers();
-    }, []),
+          try {
+            const response = await getAllPlayers(session.$id);
+            setPlayers(response);
+          } catch (err) {
+            console.error("Error loading players:", err);
+          }
+        };
+
+        loadPlayers();
+      } else {
+        console.warn("No session ID available to fetch players.");
+      }
+    }, [session]),
   );
 
   const NewPlayerButton = ({ onPress, style }: NewPlayerButtonProps) => {
@@ -134,30 +164,49 @@ const Table = () => {
   const MoneyButton = () => {
     return (
       <Link href={`/screens/moneySummary`} asChild>
-        <TouchableOpacity className="w-18 h-15 absolute mx-auto ">
-          <Image
-            source={icons.cash}
-            className="w-18 h-15 absolute top-10 mt-20 mx-auto "
-            resizeMode="contain"
-          />
+        <TouchableOpacity className="w-18 h-15 absolute top-10 left-5 m-4 mt-20">
+          <Image source={icons.cash} resizeMode="contain" />
         </TouchableOpacity>
       </Link>
     );
   };
 
-  const handleCreatePlayer = async (data: NewPlayer) => {
+  const ArchviceButton = () => {
+    return (
+      <TouchableOpacity
+        onPress={() => {
+          setArchiveSessionConfirmModalVisible(true);
+        }}
+        className="w-18 h-15 absolute top-10 right-5 m-4 mt-20"
+      >
+        <Image source={icons.sessions} resizeMode="contain" tintColor="white" />
+      </TouchableOpacity>
+    );
+  };
+
+  const handleCreatePlayer = async (data: {
+    name: string;
+    chips: number;
+    seat: number | null;
+  }) => {
+    if (!session?.$id) {
+      console.error("Cannot create player: No active session.");
+      alert("Please create or load an active session first.");
+      return;
+    }
+
     if (selectedPosition === null) return;
 
     try {
       const newPlayer = await createPlayer({
         ...data,
-        sessionId: session?.$id || "",
+        sessionId: session.$id, // Safely use session.$id since it's checked above
       });
 
       const updated = [...players];
       updated[selectedPosition] = newPlayer;
       setPlayers(updated);
-      setCreateModalVisible(false);
+      setCreatePlayerModalVisible(false);
       setSelectedPosition(null);
     } catch (err) {
       console.error("Error creating player:", err);
@@ -171,11 +220,38 @@ const Table = () => {
         date: new Date(),
         isActive: true,
       });
-      setConfirmModalVisible(false);
+      setCreateSessionConfirmModalVisible(false);
       setSession(newSession);
+      reloadSessions(); // Trigger reloadSessions to update the sessions list
     } catch (err) {
       console.error("Error creating session:", err);
       alert("Error creating session");
+    }
+  };
+
+  const handleArchiveSession = async () => {
+    if (!session || !session.$id) {
+      console.error(
+        "Cannot archive session: Session or session ID is undefined.",
+      );
+      alert("No active session to archive. Please load or create a session.");
+      return;
+    }
+
+    const updatedSession = {
+      $id: session.$id,
+      date: session.date,
+      isActive: false,
+    };
+
+    try {
+      await updateSession(session.$id, updatedSession);
+      setSession(null);
+      setArchiveSessionConfirmModalVisible(false);
+      alert(`Session archived successfully.`);
+    } catch (err) {
+      console.error("Error archiving session:", err);
+      alert("Failed to archive the session.");
     }
   };
 
@@ -189,8 +265,9 @@ const Table = () => {
       />
 
       <MoneyButton />
+      <ArchviceButton />
 
-      {session ? (
+      {session && session.isActive ? (
         <View className="flex-1 justify-center items-center">
           <Image
             source={images.pTable}
@@ -205,7 +282,7 @@ const Table = () => {
                 key={i}
                 onPress={() => {
                   setSelectedPosition(i);
-                  setCreateModalVisible(true);
+                  setCreatePlayerModalVisible(true);
                 }}
                 style={style}
               />
@@ -224,26 +301,46 @@ const Table = () => {
           <NewPlayerButton
             key="newSessionButton"
             onPress={() => {
-              setConfirmModalVisible(true);
+              setCreateSessionConfirmModalVisible(true);
             }}
           />
         </View>
       )}
 
-      <Modal visible={createModalVisible} transparent animationType="slide">
+      <Modal
+        visible={createPlayerModalVisible}
+        transparent
+        animationType="slide"
+      >
         <View className="flex-1 justify-center items-center bg-black/60">
           <CreatePlayerForm
-            onClose={() => setCreateModalVisible(false)}
+            onClose={() => setCreatePlayerModalVisible(false)}
             onSubmit={handleCreatePlayer}
             selectedSeat={selectedPosition}
           />
         </View>
       </Modal>
-      <Modal visible={confirmModalVisible} animationType="slide" transparent>
+      <Modal
+        visible={createSessionConfirmModalVisible}
+        animationType="slide"
+        transparent
+      >
         <View className="flex-1 justify-center items-center bg-black/70">
           <ConfirmForm
-            setModalVisible={setConfirmModalVisible}
+            setModalVisible={setCreateSessionConfirmModalVisible}
             onConfirm={handleCreateSession}
+          />
+        </View>
+      </Modal>
+      <Modal
+        visible={archiveSessionConfirmModalVisible}
+        animationType="slide"
+        transparent
+      >
+        <View className="flex-1 justify-center items-center bg-black/70">
+          <ConfirmForm
+            setModalVisible={setArchiveSessionConfirmModalVisible}
+            onConfirm={handleArchiveSession}
           />
         </View>
       </Modal>

@@ -2,10 +2,12 @@ import React, { useState, useEffect } from "react";
 import { View, Text, Image, ScrollView, TextInput } from "react-native";
 import { icons } from "@/constants/icons";
 import GoBackButton from "@/components/GoBackButton";
-import { getAllPlayers, getTableMoneySum } from "@/firebase";
+import { getActiveSession, getAllPlayers, getTableMoneySum } from "@/firebase";
 import { Ionicons } from "@expo/vector-icons";
 
 const MoneySummary = () => {
+  const [session, setSession] = useState<Session | null>(null);
+
   const [moneySum, setMoneySum] = useState<number>(0);
   const [players, setPlayers] = useState<(Player | null)[]>(
     Array(8).fill(null),
@@ -19,27 +21,57 @@ const MoneySummary = () => {
   >([]);
 
   useEffect(() => {
-    const fetchTableData = async () => {
+    const loadSession = async () => {
+      console.log("Checking for an active session...");
+
       try {
-        const moneyResponse = await getTableMoneySum();
-        setMoneySum(moneyResponse);
-
-        const playersResponse = await getAllPlayers();
-        setPlayers(playersResponse);
-
-        const initialCurrentChips: { [id: string]: number } = {};
-        playersResponse.forEach((player) => {
-          if (player) initialCurrentChips[player.$id] = player.chips;
-        });
-
-        setCurrentChips(initialCurrentChips);
+        const response = await getActiveSession();
+        if (response) {
+          console.log("Active session loaded:", response);
+          setSession(response);
+        } else {
+          console.warn("No active session found.");
+          setSession(null);
+        }
       } catch (err) {
-        console.error("Error loading table data:", err);
+        console.error("Error loading session:", err);
+        setSession(null); // Ensure session is reset on error
+      }
+    };
+
+    loadSession();
+  }, []);
+
+  useEffect(() => {
+    const fetchTableData = async () => {
+      if (session?.$id) {
+        try {
+          const moneyResponse = await getTableMoneySum(session);
+          if (moneyResponse) {
+            console.log("Money sum loaded:", moneyResponse);
+            setMoneySum(moneyResponse);
+          }
+
+          const playersResponse = await getAllPlayers(session.$id);
+          if (playersResponse) {
+            console.log("Players loaded:", playersResponse);
+            setPlayers(playersResponse);
+          }
+
+          const initialCurrentChips: { [id: string]: number } = {};
+          playersResponse.forEach((player) => {
+            if (player) initialCurrentChips[player.$id] = player.chips;
+          });
+
+          setCurrentChips(initialCurrentChips);
+        } catch (err) {
+          console.error("Error loading table data:", err);
+        }
       }
     };
 
     fetchTableData();
-  }, []);
+  }, [session]);
 
   const handleCurrentChipsChange = (id: string, value: string) => {
     const sanitizedValue = parseInt(value, 10) || 0; // Ensure numeric input
