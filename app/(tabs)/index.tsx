@@ -15,13 +15,11 @@ import {
   getAllPlayers,
   createSession,
   getActiveSession,
-  updatePlayer,
   updateSession,
 } from "@/firebase";
 import { icons } from "@/constants/icons";
 import { Link } from "expo-router";
 import { useFocusEffect } from "@react-navigation/native";
-import useFetch from "@/services/useFetch";
 import ConfirmForm from "@/components/modals/ConfirmForm";
 import { useSessionContext } from "@/contexts/SessionContext";
 
@@ -54,12 +52,6 @@ const Table = () => {
     Array(8).fill(null),
   );
   const [selectedPosition, setSelectedPosition] = useState<number | null>(null);
-
-  // const {
-  //   data: users,
-  //   loading: usersLoading,
-  //   error: usersError,
-  // } = useFetch(() => getAllPlayers([Query.orderAsc("seat")]));
 
   useEffect(() => {
     const loadSession = async () => {
