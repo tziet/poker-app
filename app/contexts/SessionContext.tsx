@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
-import { getAllSessions } from "@/firebase";
+import { getAllSessions } from "@/app/services/firebase";
 
 const SessionContext = createContext<{
   sessions: Session[];

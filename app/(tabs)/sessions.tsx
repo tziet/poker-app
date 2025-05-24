@@ -7,13 +7,13 @@ import {
   View,
 } from "react-native";
 import React, { useCallback, useState, useEffect } from "react";
-import { images } from "@/constants/images";
-import { icons } from "@/constants/icons";
-import SearchBar from "@/components/SearchBar";
+import { images } from "@/app/constants/images";
+import { icons } from "@/app/constants/icons";
+import SearchBar from "@/app/components/SearchBar";
 import { useRouter } from "expo-router";
-import useFetch from "@/services/useFetch";
-import { getActiveSession, getAllSessions } from "@/firebase";
-import { useSessionContext } from "@/contexts/SessionContext";
+import useFetch from "@/app/services/useFetch";
+import { getActiveSession, getAllSessions } from "@/app/services/firebase";
+import { useSessionContext } from "@/app/contexts/SessionContext";
 
 export default function Sessions() {
   const router = useRouter();

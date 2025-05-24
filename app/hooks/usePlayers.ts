@@ -1,5 +1,5 @@
-import useFetch from "@/services/useFetch";
-import { getAllPlayers } from "@/firebase";
+import useFetch from "@/app/services/useFetch";
+import { getAllPlayers } from "@/app/services/firebase";
 
 const usePlayers = (sessionId: string | null) => {
   const { data, loading, error, refetch } = useFetch(() => {

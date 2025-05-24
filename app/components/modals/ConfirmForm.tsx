@@ -7,7 +7,7 @@ import {
   TouchableOpacity,
 } from "react-native";
 import { router } from "expo-router";
-import { deletePlayer } from "@/firebase";
+import { deletePlayer } from "@/app/services/firebase";
 
 type ConfirmFormProps = {
   setModalVisible: React.Dispatch<React.SetStateAction<boolean>>;

@@ -1,11 +1,15 @@
 import React, { useEffect, useState } from "react";
 import { View, Text, TouchableOpacity, Modal, Image } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
-import GoBackButton from "@/components/GoBackButton";
-import ConfirmForm from "@/components/modals/ConfirmForm";
-import EditAttributeForm from "@/components/modals/EditAttributeForm";
-import { deletePlayer, getPlayerDetails, updatePlayer } from "@/firebase";
-import { icons } from "@/constants/icons";
+import GoBackButton from "@/app/components/GoBackButton";
+import ConfirmForm from "@/app/components/modals/ConfirmForm";
+import EditAttributeForm from "@/app/components/modals/EditAttributeForm";
+import {
+  deletePlayer,
+  getPlayerDetails,
+  updatePlayer,
+} from "@/app/services/firebase";
+import { icons } from "@/app/constants/icons";
 
 const PlayerDetails = () => {
   const { id } = useLocalSearchParams();
