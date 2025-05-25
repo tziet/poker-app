@@ -1,7 +1,7 @@
 import { Stack } from "expo-router";
 import "./globals.css";
 import { StatusBar } from "expo-status-bar";
-import { SessionProvider } from "@/contexts/SessionContext"; // Adjust the import path based on your project structure
+import { SessionProvider } from "@/app/contexts/SessionContext"; // Adjust the import path based on your project structure
 
 export default function RootLayout() {
   return (
