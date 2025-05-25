@@ -1,142 +1,145 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { View, Text, Image, ScrollView, TextInput } from "react-native";
-import { icons } from "@/constants/icons";
-import GoBackButton from "@/components/GoBackButton";
-import { getActiveSession, getAllPlayers, getTableMoneySum } from "@/firebase";
 import { Ionicons } from "@expo/vector-icons";
+import {
+  getActiveSession,
+  getAllPlayers,
+  getTableMoneySum,
+} from "@/app/services/firebase";
+import { icons } from "@/app/constants/icons";
+import GoBackButton from "@/app/components/GoBackButton";
 
 const MoneySummary = () => {
-  const [session, setSession] = useState<Session | null>(null);
+  // Explicitly define the state shape
+  type MoneySummaryState = {
+    session: Session | null;
+    moneySum: number;
+    players: (Player | null)[];
+    currentChips: { [id: string]: number };
+    debts: { lender: string; borrower: string; amount: number }[];
+  };
 
-  const [moneySum, setMoneySum] = useState<number>(0);
-  const [players, setPlayers] = useState<(Player | null)[]>(
-    Array(8).fill(null),
-  );
-  const [currentChips, setCurrentChips] = useState<{ [id: string]: number }>(
-    {},
-  );
+  const [state, setState] = useState<MoneySummaryState>({
+    session: null,
+    moneySum: 0,
+    players: Array<Player | null>(8).fill(null),
+    currentChips: {},
+    debts: [],
+  });
 
-  const [debts, setDebts] = useState<
-    { lender: string; borrower: string; amount: number }[]
-  >([]);
-
-  useEffect(() => {
-    const loadSession = async () => {
-      console.log("Checking for an active session...");
-
-      try {
-        const response = await getActiveSession();
-        if (response) {
-          console.log("Active session loaded:", response);
-          setSession(response);
-        } else {
-          console.warn("No active session found.");
-          setSession(null);
-        }
-      } catch (err) {
-        console.error("Error loading session:", err);
-        setSession(null); // Ensure session is reset on error
+  const loadSession = useCallback(async () => {
+    try {
+      const session = await getActiveSession();
+      if (session) {
+        console.log("Active session loaded:", session);
+        fetchTableData(session);
+        // Update the state with the session
+        setState((prev) => ({
+          ...prev,
+          session,
+        }));
+      } else {
+        console.warn("No active session found.");
       }
-    };
-
-    loadSession();
+    } catch (err) {
+      console.error("Error loading session:", err);
+    }
   }, []);
 
+  const fetchTableData = async (session: Session) => {
+    try {
+      const [moneySum, players] = await Promise.all([
+        getTableMoneySum(session),
+        getAllPlayers(session.$id) as Promise<Player[]>,
+      ]);
+
+      console.log("Money and players loaded:", { moneySum, players });
+
+      const initialChips = players.reduce(
+        (acc, player) => {
+          if (player) acc[player.$id] = player.chips;
+          return acc;
+        },
+        {} as { [id: string]: number },
+      );
+
+      // Update state with fetched players and table data
+      setState((prev) => ({
+        ...prev, // Ensures other fields like `debts` and `session` are preserved
+        moneySum: moneySum, // Explicitly assigning the value
+        players: players as (Player | null)[], // Type assertion ensures compatibility
+        currentChips: { ...initialChips }, // Properly typed object for currentChips
+      }));
+    } catch (err) {
+      console.error("Error fetching table data:", err);
+    }
+  };
+
+  const calculateTransactions = useCallback(() => {
+    const { players, currentChips } = state;
+    const playersWithAmounts = players
+      .filter((player): player is Player => player !== null)
+      .map((player) => ({
+        playerName: player.name,
+        netChange: currentChips[player.$id] - player.chips,
+        id: player.$id,
+      }));
+
+    const lenders = playersWithAmounts.filter((p) => p.netChange > 0);
+    const borrowers = playersWithAmounts.filter((p) => p.netChange < 0);
+
+    const transactions: { lender: string; borrower: string; amount: number }[] =
+      [];
+    let i = 0,
+      j = 0;
+
+    while (i < lenders.length && j < borrowers.length) {
+      const amount = Math.min(
+        lenders[i].netChange,
+        Math.abs(borrowers[j].netChange),
+      );
+
+      transactions.push({
+        lender: lenders[i].playerName,
+        borrower: borrowers[j].playerName,
+        amount,
+      });
+
+      lenders[i].netChange -= amount;
+      borrowers[j].netChange += amount;
+
+      if (lenders[i].netChange === 0) i++;
+      if (borrowers[j].netChange === 0) j++;
+    }
+
+    return transactions;
+  }, [state.players, state.currentChips]);
+
   useEffect(() => {
-    const fetchTableData = async () => {
-      if (session?.$id) {
-        try {
-          const moneyResponse = await getTableMoneySum(session);
-          if (moneyResponse) {
-            console.log("Money sum loaded:", moneyResponse);
-            setMoneySum(moneyResponse);
-          }
+    const debts = calculateTransactions();
+    // Update state with calculated debts
+    setState((prev) => ({
+      ...prev,
+      debts,
+    }));
+  }, [state.currentChips, state.players, calculateTransactions]);
 
-          const playersResponse = await getAllPlayers(session.$id);
-          if (playersResponse) {
-            console.log("Players loaded:", playersResponse);
-            setPlayers(playersResponse);
-          }
-
-          const initialCurrentChips: { [id: string]: number } = {};
-          playersResponse.forEach((player) => {
-            if (player) initialCurrentChips[player.$id] = player.chips;
-          });
-
-          setCurrentChips(initialCurrentChips);
-        } catch (err) {
-          console.error("Error loading table data:", err);
-        }
-      }
-    };
-
-    fetchTableData();
-  }, [session]);
+  useEffect(() => {
+    loadSession();
+  }, [loadSession]);
 
   const handleCurrentChipsChange = (id: string, value: string) => {
-    const sanitizedValue = parseInt(value, 10) || 0; // Ensure numeric input
-    setCurrentChips((prev) => ({
+    const parsedValue = parseInt(value, 10) || 0;
+    setState((prev) => ({
       ...prev,
-      [id]: sanitizedValue,
+      currentChips: {
+        ...prev.currentChips,
+        [id]: parsedValue,
+      },
     }));
   };
 
-  useEffect(() => {
-    const calculateTransactions = () => {
-      const playersWithAmounts = players
-        .map((player) => {
-          if (player) {
-            const netChange = currentChips[player.$id] - player.chips;
-            return { playerName: player.name, netChange, id: player.$id };
-          }
-          return null;
-        })
-        .filter((p) => p !== null) as {
-        playerName: string;
-        netChange: number;
-        id: string;
-      }[];
-
-      const lenders = playersWithAmounts.filter((p) => p.netChange > 0);
-      const borrowers = playersWithAmounts.filter((p) => p.netChange < 0);
-
-      const transactions: {
-        lender: string;
-        borrower: string;
-        amount: number;
-      }[] = [];
-
-      let i = 0,
-        j = 0;
-
-      while (i < lenders.length && j < borrowers.length) {
-        const lender = lenders[i];
-        const borrower = borrowers[j];
-
-        const amountToSettle = Math.min(
-          lender.netChange,
-          Math.abs(borrower.netChange),
-        );
-
-        transactions.push({
-          lender: lender.playerName,
-          borrower: borrower.playerName,
-          amount: amountToSettle,
-        });
-
-        lenders[i].netChange -= amountToSettle;
-        borrowers[j].netChange += amountToSettle;
-
-        if (lenders[i].netChange === 0) i++;
-        if (borrowers[j].netChange === 0) j++;
-      }
-
-      return transactions;
-    };
-
-    const transactionDetails = calculateTransactions();
-    setDebts(transactionDetails);
-  }, [currentChips, players]);
+  const { moneySum, players, debts } = state;
 
   return (
     <View className="flex-1 bg-primary">
@@ -155,15 +158,14 @@ const MoneySummary = () => {
         <Text className="text-white text-center text-xl font-bold">
           Money at the table: {moneySum}
         </Text>
+
         <View className="flex-row items-center justify-between mt-3 bg-secondary p-4 rounded">
-          <Text className="text-white text-lg font-bold mt-5">Players</Text>
-          <Text className="text-white text-lg font-bold mt-5">
-            Current Chips
-          </Text>
+          <Text className="text-white text-lg font-bold">Players</Text>
+          <Text className="text-white text-lg font-bold">Current Chips</Text>
         </View>
 
         {players.map(
-          (player, index) =>
+          (player) =>
             player && (
               <View
                 key={player.$id}
@@ -178,21 +180,12 @@ const MoneySummary = () => {
 
                 <View className="flex-row items-center">
                   <TextInput
-                    style={{
-                      backgroundColor: "#333",
-                      color: "white",
-                      padding: 5,
-                      width: 60,
-                      textAlign: "center",
-                      borderRadius: 4,
-                    }}
+                    className="rounded px-2 text-white bg-dark-200"
                     keyboardType="numeric"
-                    value={currentChips[player.$id]?.toString() || ""}
+                    value={state.currentChips[player.$id]?.toString() || ""}
                     onChangeText={(value) =>
                       handleCurrentChipsChange(player.$id, value)
                     }
-                    placeholder="Chips"
-                    placeholderTextColor="#999"
                   />
                 </View>
               </View>
@@ -220,14 +213,12 @@ const MoneySummary = () => {
                   />
                   <Text className="text-green-500">{debt.lender}</Text>
                 </View>
-                <Text className="text-lg font-bold text-white">
-                  ₪{debt.amount}
-                </Text>
+                <Text className="text-white font-bold">₪{debt.amount}</Text>
               </View>
             ))
           ) : (
-            <Text className="text-white text-center mt-3">
-              No transactions to show.
+            <Text className="text-center text-white">
+              No transactions to show
             </Text>
           )}
         </View>

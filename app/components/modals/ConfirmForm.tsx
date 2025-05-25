@@ -1,13 +1,5 @@
 import React, { useState } from "react";
-import {
-  View,
-  Text,
-  StyleSheet,
-  TextInput,
-  TouchableOpacity,
-} from "react-native";
-import { router } from "expo-router";
-import { deletePlayer } from "@/firebase";
+import { View, Text, TouchableOpacity } from "react-native";
 
 type ConfirmFormProps = {
   setModalVisible: React.Dispatch<React.SetStateAction<boolean>>;

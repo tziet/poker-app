@@ -1,71 +1,103 @@
-import React, { useEffect, useState } from "react";
-import { View, Text, TouchableOpacity, Modal, Image } from "react-native";
+import React, { useEffect, useState, useCallback } from "react";
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  Modal,
+  Image,
+  ActivityIndicator,
+} from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
-import GoBackButton from "@/components/GoBackButton";
-import ConfirmForm from "@/components/modals/ConfirmForm";
-import EditAttributeForm from "@/components/modals/EditAttributeForm";
-import { deletePlayer, getPlayerDetails, updatePlayer } from "@/firebase";
-import { icons } from "@/constants/icons";
+import GoBackButton from "@/app/components/GoBackButton";
+import ConfirmForm from "@/app/components/modals/ConfirmForm";
+import EditAttributeForm from "@/app/components/modals/EditAttributeForm";
+import {
+  deletePlayer,
+  getPlayerDetails,
+  updatePlayer,
+} from "@/app/services/firebase";
+import { icons } from "@/app/constants/icons";
 
 const PlayerDetails = () => {
   const { id } = useLocalSearchParams();
+  const playerId = typeof id === "string" ? id : id?.[0] || "";
+
   const [player, setPlayer] = useState<Player | null>(null);
-  const [confirmModalVisible, setConfirmModalVisible] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [deleteModalVisible, setDeleteModalVisible] = useState(false);
   const [editModalVisible, setEditModalVisible] = useState(false);
 
-  const playerId = typeof id === "string" ? id : id?.[0] || "";
+  /** Fetch Player Details */
 
   useEffect(() => {
     const fetchPlayerDetails = async () => {
-      const details = await getPlayerDetails(playerId);
-      if (details) {
-        setPlayer(details);
+      try {
+        const details = await getPlayerDetails(playerId);
+        setPlayer(details ?? null);
+      } catch (error) {
+        console.error("Failed to fetch player details:", error);
+        alert("Error loading player details.");
+      } finally {
+        setLoading(false);
       }
     };
     fetchPlayerDetails();
-  }, [id]);
+  }, [playerId]);
 
+  /** Handle Delete */
   const handleDeletePlayer = async () => {
     try {
-      await deletePlayer(playerId);
-      router.back();
-      setConfirmModalVisible(false);
-      alert(`Player ${player?.name} has been deleted.`);
-    } catch (err) {
-      console.error("Error deleting player:", err);
-      alert("Error deleting player!");
+      if (player) {
+        await deletePlayer(playerId);
+        alert(`Player ${player.name} has been deleted.`);
+        router.back();
+      }
+    } catch (error) {
+      console.error("Error deleting player:", error);
+      alert("Failed to delete player.");
+    } finally {
+      setDeleteModalVisible(false);
     }
   };
 
+  /** Handle Edit */
   const handleEditPlayer = async (
     updatedName: string,
     updatedChips: number,
   ) => {
-    const updatedPlayer = {
-      name: updatedName,
-      chips: updatedChips,
-      $id: player!.$id,
-      seat: player?.seat ?? null,
-      sessionId: player!.sessionId,
-    };
-
     try {
+      const updatedPlayer = {
+        ...player,
+        name: updatedName,
+        chips: updatedChips,
+      } as Player;
+
       await updatePlayer(playerId, updatedPlayer);
       setPlayer(updatedPlayer);
-      setEditModalVisible(false);
-      alert(`Player ${player?.name} updated successfully.`);
-    } catch (err) {
-      console.error("Error updating player:", err);
+      alert("Player updated successfully.");
+    } catch (error) {
+      console.error("Error updating player:", error);
       alert("Failed to update player.");
+    } finally {
+      setEditModalVisible(false);
     }
   };
 
+  if (loading) {
+    return (
+      <View className="flex-1 justify-center items-center bg-primary">
+        <ActivityIndicator size="large" color="#FFF" />
+      </View>
+    );
+  }
+
   return (
     <View className="flex-1 bg-primary">
+      {/* Header */}
       <View className="items-center mt-10">
         <Image
           source={icons.user}
-          className="w-16 h-16"
+          className="w-12 h-10 mt-5"
           resizeMode="contain"
           tintColor="#fff"
         />
@@ -74,6 +106,7 @@ const PlayerDetails = () => {
         </Text>
       </View>
 
+      {/* Player Info */}
       <View className="px-5 py-4 mt-10">
         <PlayerInfo
           label="Name"
@@ -91,56 +124,50 @@ const PlayerDetails = () => {
         />
       </View>
 
+      {/* Buttons */}
       <View className="mt-8 px-5">
-        <TouchableOpacity
-          className="bg-orange-500 rounded-lg py-3 mb-4 flex-row items-center justify-center"
+        <ActionButton
           onPress={() => setEditModalVisible(true)}
-        >
-          <Image
-            source={icons.edit}
-            className="w-5 h-5 mr-1"
-            tintColor="#fff"
-          />
-          <Text className="text-white font-semibold text-lg">Edit Player</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          className="bg-red-900 rounded-lg py-3 mb-6 flex-row items-center justify-center"
-          onPress={() => setConfirmModalVisible(true)}
-        >
-          <Image
-            source={icons.removeUser}
-            className="w-6 h-6 mr-2"
-            tintColor="#fff"
-          />
-          <Text className="text-white font-bold text-lg">Delete Player</Text>
-        </TouchableOpacity>
+          color="orange-500"
+          icon={icons.edit}
+          text="Edit Player"
+        />
+        <ActionButton
+          onPress={() => setDeleteModalVisible(true)}
+          color="red-900"
+          icon={icons.removeUser}
+          text="Delete Player"
+        />
       </View>
 
-      <Modal visible={confirmModalVisible} animationType="slide" transparent>
-        <View className="flex-1 justify-center items-center bg-black/70">
-          <ConfirmForm
-            setModalVisible={setConfirmModalVisible}
-            onConfirm={handleDeletePlayer}
-          />
-        </View>
-      </Modal>
+      {/* Modals */}
+      <CustomModal
+        visible={deleteModalVisible}
+        onClose={() => setDeleteModalVisible(false)}
+      >
+        <ConfirmForm
+          setModalVisible={setDeleteModalVisible}
+          onConfirm={handleDeletePlayer}
+        />
+      </CustomModal>
 
-      <Modal visible={editModalVisible} animationType="slide" transparent>
-        <View className="flex-1 justify-center items-center bg-black/70">
-          <EditAttributeForm
-            id={playerId}
-            onClose={() => setEditModalVisible(false)}
-            onSubmit={handleEditPlayer}
-          />
-        </View>
-      </Modal>
+      <CustomModal
+        visible={editModalVisible}
+        onClose={() => setEditModalVisible(false)}
+      >
+        <EditAttributeForm
+          id={playerId}
+          onClose={() => setEditModalVisible(false)}
+          onSubmit={handleEditPlayer}
+        />
+      </CustomModal>
 
       <GoBackButton />
     </View>
   );
 };
 
+/** Player Info Component */
 const PlayerInfo = ({
   label,
   value,
@@ -155,13 +182,51 @@ const PlayerInfo = ({
     <Text className="text-white text-base">{value || "N/A"}</Text>
     {onEdit && (
       <TouchableOpacity
-        onPress={onEdit}
         className="bg-blue-500 px-3 py-2 rounded-md mt-2 self-start"
+        onPress={onEdit}
       >
         <Text className="text-white text-sm">Edit</Text>
       </TouchableOpacity>
     )}
   </View>
+);
+
+/** Reusable Action Button */
+const ActionButton = ({
+  onPress,
+  color,
+  icon,
+  text,
+}: {
+  onPress: () => void;
+  color: string;
+  icon: any;
+  text: string;
+}) => (
+  <TouchableOpacity
+    className={`bg-${color} rounded-lg py-3 mb-4 flex-row items-center justify-center`}
+    onPress={onPress}
+  >
+    <Image source={icon} className="w-5 h-5 mr-1" tintColor="#fff" />
+    <Text className="text-white font-semibold text-lg">{text}</Text>
+  </TouchableOpacity>
+);
+
+/** Reusable Modal Wrapper */
+const CustomModal = ({
+  visible,
+  onClose,
+  children,
+}: {
+  visible: boolean;
+  onClose: () => void;
+  children: React.ReactNode;
+}) => (
+  <Modal visible={visible} animationType="slide" transparent>
+    <View className="flex-1 justify-center items-center bg-black/70">
+      <View className="bg-white p-6 rounded-xl w-4/5">{children}</View>
+    </View>
+  </Modal>
 );
 
 export default PlayerDetails;

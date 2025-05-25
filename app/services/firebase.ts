@@ -18,8 +18,6 @@ const firebaseConfig = {
   authDomain: process.env.EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN,
   projectId: process.env.EXPO_PUBLIC_FIREBASE_PROJECT_ID,
   storageBucket: process.env.EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: process.env.EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
-  appId: process.env.EXPO_PUBLIC_FIREBASE_APP_ID,
 };
 
 const app = initializeApp(firebaseConfig);
@@ -27,58 +25,25 @@ const db = getFirestore(app);
 
 export { db };
 
-export const createPlayer = async (data: NewPlayer): Promise<Player> => {
-  const docRef = await addDoc(collection(db, "players"), data); // "players" is the Firestore collection name
-  return {
-    $id: docRef.id,
-    ...data,
-  };
+export const createPlayer = async (data: NewPlayer) => {
+  const docRef = await addDoc(collection(db, "players"), data);
+  return { $id: docRef.id, ...data };
 };
 
-export const getPlayerDetails = async (id: string): Promise<Player | null> => {
-  const docRef = doc(db, "players", id); // "players" is the Firestore collection name
-  const docSnap = await getDoc(docRef);
-
-  if (!docSnap.exists()) {
-    return null; // Handle document not found
-  }
-
-  const data = docSnap.data();
-  return {
-    $id: docSnap.id,
-    ...data,
-  } as Player;
+export const getPlayerDetails = async (id: string) => {
+  const docSnap = await getDoc(doc(db, "players", id));
+  if (!docSnap.exists()) return null;
+  return { $id: docSnap.id, ...docSnap.data() } as Player;
 };
 
-export const getAllPlayers = async (
-  sessionId: string,
-): Promise<(Player | null)[]> => {
-  if (!sessionId || sessionId === "") {
-    throw new Error("Invalid sessionId provided to getAllPlayers");
-  }
-
-  const playersRef = collection(db, "players");
+export const getAllPlayers = async (sessionId: string) => {
   const q = query(
-    playersRef,
+    collection(db, "players"),
     orderBy("seat", "asc"),
     where("sessionId", "==", sessionId),
   );
-
   const snapshot = await getDocs(q);
-
-  const data = Array(8).fill(null);
-  snapshot.docs.forEach((doc) => {
-    const player = {
-      $id: doc.id,
-      ...doc.data(),
-    } as Player;
-
-    if (player.seat !== null && player.seat >= 0 && player.seat < 8) {
-      data[player.seat] = player;
-    }
-  });
-
-  return data;
+  return snapshot.docs.map((doc) => ({ $id: doc.id, ...doc.data() }));
 };
 
 export const updatePlayer = async (
