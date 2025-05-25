@@ -1,4 +1,4 @@
-import React, { useCallback, useState, useEffect } from "react";
+import React, { useCallback, useState, useEffect, forwardRef } from "react";
 import {
   View,
   Image,
@@ -24,35 +24,45 @@ import CreatePlayerForm from "@/app/components/modals/CreatePlayerForm";
 import ConfirmForm from "@/app/components/modals/ConfirmForm";
 import { useSessionContext } from "@/app/contexts/SessionContext";
 
-// Component for rendering buttons
 type ActionButtonProps = {
   onPress: () => void;
   style?: ViewStyle;
   icon: any;
-  text?: string;
+  topText?: string;
+  bottomText?: string;
   noTintColor?: boolean;
 };
 
-const ActionButton = ({
-  onPress,
-  style,
-  icon,
-  text,
-  noTintColor,
-}: ActionButtonProps) => (
-  <TouchableOpacity
-    onPress={onPress}
-    style={style}
-    className="absolute items-center"
-  >
-    <Image
-      source={icon}
-      className="w-6 h-6 text-white"
-      resizeMode="contain"
-      tintColor="white"
-    />
-    {text && <Text className="text-white mt-1 text-sm">{text}</Text>}
-  </TouchableOpacity>
+const ActionButton = forwardRef(
+  (
+    {
+      onPress,
+      style,
+      icon,
+      topText,
+      bottomText,
+      noTintColor,
+    }: ActionButtonProps,
+    ref: React.Ref<any>,
+  ) => (
+    <TouchableOpacity
+      ref={ref} // forward the ref
+      onPress={onPress}
+      style={style}
+      className="absolute items-center"
+    >
+      {topText && <Text className="text-white text-sm mb-1">{topText}</Text>}
+      <Image
+        source={icon}
+        className="w-6 h-6 text-white"
+        resizeMode="contain"
+        tintColor={noTintColor ? undefined : "white"}
+      />
+      {bottomText && (
+        <Text className="text-white mt-2 text-sm">{bottomText}</Text>
+      )}
+    </TouchableOpacity>
+  ),
 );
 
 const Table = () => {
@@ -94,7 +104,22 @@ const Table = () => {
     }
     try {
       const sessionPlayers = (await getAllPlayers(session.$id)) as Player[];
-      setPlayers(sessionPlayers);
+
+      // Create an array of 8 seats initialized with null
+      const updatedPlayers = Array(positions.length).fill(null);
+
+      // Map players to their respective seat positions (replace `seat` with the correct property)
+      sessionPlayers.forEach((player) => {
+        if (
+          player.seat !== null &&
+          player.seat >= 0 &&
+          player.seat < positions.length
+        ) {
+          updatedPlayers[player.seat] = player; // Place player in the correct seat
+        }
+      });
+
+      setPlayers(updatedPlayers);
     } catch (error) {
       console.error("Failed to load players:", error);
       alert("Unable to load players. Please try again.");
@@ -244,6 +269,7 @@ const Table = () => {
           style={{ top: 100, left: 40 }}
           icon={icons.cash}
           onPress={() => {}}
+          noTintColor={true}
         />
       </Link>
       <ActionButton
@@ -282,7 +308,8 @@ const Table = () => {
                 <ActionButton
                   style={style}
                   icon={icons.user}
-                  text={`Chips: ${players[i]?.chips || 0}`}
+                  topText={players[i]?.name}
+                  bottomText={`Chips: ${players[i]?.chips || 0}`}
                   onPress={() => {}}
                 />
               </Link>
@@ -293,9 +320,9 @@ const Table = () => {
         <View className="flex-1 justify-center items-center">
           <ActionButton
             onPress={() => openModal("createSession")}
-            style={{ top: 20 }}
+            style={{ alignItems: "center" }}
             icon={icons.plus}
-            text="New Session!"
+            bottomText="New Session"
           />
         </View>
       )}

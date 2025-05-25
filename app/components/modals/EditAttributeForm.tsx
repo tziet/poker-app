@@ -1,7 +1,8 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { View, Text } from "react-native";
 import TextInputField from "@/app/components/inputs/TextInputField";
 import ButtonRow from "@/app/components/ui/ButtonRow";
+import { getPlayerDetails } from "@/app/services/firebase";
 
 interface EditFormProps {
   id: string;
@@ -12,6 +13,25 @@ interface EditFormProps {
 const EditAttributeForm = ({ id, onClose, onSubmit }: EditFormProps) => {
   const [name, setName] = useState("");
   const [chips, setChips] = useState("");
+
+  useEffect(() => {
+    const loadPlayerDetails = async () => {
+      try {
+        const details = await getPlayerDetails(id);
+        if (details) {
+          console.log("Player details loaded:", details);
+          setName(details.name);
+          setChips(details.chips.toString());
+        } else {
+          console.warn("No player found for this ID:", id);
+        }
+      } catch (error) {
+        console.error("Failed to load player details:", error);
+        alert("Failed to load player details. Please try again.");
+      }
+    };
+    loadPlayerDetails();
+  }, [id]);
 
   const handleSubmit = () => {
     if (name.trim() && !isNaN(parseInt(chips))) {
