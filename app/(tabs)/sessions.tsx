@@ -6,24 +6,11 @@ import {
   Text,
   View,
 } from "react-native";
-import React, { useCallback, useState, useEffect } from "react";
-import { images } from "@/constants/images";
-import { icons } from "@/constants/icons";
-import SearchBar from "@/components/SearchBar";
-import { useRouter } from "expo-router";
-import useFetch from "@/services/useFetch";
-import { getActiveSession, getAllSessions } from "@/firebase";
-import { useSessionContext } from "@/contexts/SessionContext";
+import { icons } from "@/app/constants/icons";
+import { useSessionContext } from "@/app/contexts/SessionContext";
 
-export default function Sessions() {
-  const router = useRouter();
+const Sessions = () => {
   const { sessions } = useSessionContext();
-
-  // const {
-  //   data: movies,
-  //   loading: moviesLoading,
-  //   error: moviesError,
-  // } = useFetch(() => fetchMovies({ query: "" }));
 
   return (
     <>
@@ -39,24 +26,6 @@ export default function Sessions() {
             resizeMode="contain"
             tintColor="white"
           />
-          {/*{moviesLoading ? (*/}
-          {/*  <ActivityIndicator*/}
-          {/*    size="large"*/}
-          {/*    color="#0000ff"*/}
-          {/*    className="mt-10 self-center"*/}
-          {/*  />*/}
-          {/*) : moviesError ? (*/}
-          {/*  <Text>Error: {moviesError?.message}</Text>*/}
-          {/*) : (*/}
-          {/*  <View className="flex-1 mt-5">*/}
-          {/*    <SearchBar*/}
-          {/*      onPress={() => router.push("/profile")}*/}
-          {/*      placeholder="Search for something"*/}
-          {/*    />*/}
-          {/*    <>*/}
-          {/*      <Text className="text-ig text-white font-bold mt-5 mb-3">*/}
-          {/*        Latest Movies*/}
-          {/*      </Text>*/}
           <FlatList
             data={sessions}
             renderItem={({ item }) => (
@@ -86,11 +55,10 @@ export default function Sessions() {
             className="mt-2 pb-32"
             scrollEnabled={false}
           ></FlatList>
-          {/*    </>*/}
-          {/*  </View>*/}
-          {/*)}*/}
         </ScrollView>
       </View>
     </>
   );
-}
+};
+
+export default Sessions;
