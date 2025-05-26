@@ -6,6 +6,7 @@ type Props = {
   onSubmit: (data: {
     name: string;
     chips: number;
+    endgameChips: number;
     seat: number | null;
   }) => void;
   selectedSeat: number | null;
@@ -21,6 +22,7 @@ const CreatePlayerForm = ({ onClose, onSubmit, selectedSeat }: Props) => {
       onSubmit({
         name,
         chips: chipsNumber,
+        endgameChips: chipsNumber,
         seat: selectedSeat,
       }); // ✨ pass clean data to parent
       setName("");
@@ -42,15 +44,17 @@ const CreatePlayerForm = ({ onClose, onSubmit, selectedSeat }: Props) => {
         onChangeText={setName}
         placeholder="e.g. Messi"
         className="border border-gray-300 rounded-lg px-3 py-2 mb-4"
+        maxLength={10}
       />
 
-      <Text className="text-sm text-gray-700 mb-1">Chips</Text>
+      <Text className="text-sm text-gray-700 mb-1">Buy-In Chips</Text>
       <TextInput
         value={chips}
         onChangeText={setChips}
         placeholder="e.g. 1000"
         keyboardType="numeric"
         className="border border-gray-300 rounded-lg px-3 py-2 mb-4"
+        maxLength={6}
       />
 
       <View className="flex-row justify-between mt-4">

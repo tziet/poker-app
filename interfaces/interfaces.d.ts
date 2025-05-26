@@ -2,15 +2,13 @@ interface Player {
   $id: string;
   name: string;
   chips: number;
+  endgameChips: number;
   seat: number | null;
   sessionId: string;
 }
 
-interface NewPlayer {
-  name: string;
-  chips: number;
-  seat: number | null;
-  sessionId: string;
+interface NewPlayer extends Player {
+  $id?: string;
 }
 
 interface Session {
@@ -19,7 +17,6 @@ interface Session {
   isActive: boolean;
 }
 
-interface NewSession {
-  date: Date;
-  isActive: boolean;
+interface NewSession extends Session {
+  $id?: string;
 }

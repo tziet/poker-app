@@ -1,5 +1,5 @@
-import useFetch from "@/app/services/useFetch";
-import { getActiveSession } from "@/app/services/firebase";
+import useFetch from "@/services/useFetch";
+import { getActiveSession } from "@/services/firebase";
 
 const useSession = () => {
   const { data, loading, error, refetch } = useFetch(getActiveSession);

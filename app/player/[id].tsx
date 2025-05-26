@@ -15,8 +15,8 @@ import {
   deletePlayer,
   getPlayerDetails,
   updatePlayer,
-} from "@/app/services/firebase";
-import { icons } from "@/app/constants/icons";
+} from "@/services/firebase";
+import { icons } from "@/constants/icons";
 
 const PlayerDetails = () => {
   const { id } = useLocalSearchParams();
@@ -63,13 +63,13 @@ const PlayerDetails = () => {
   /** Handle Edit */
   const handleEditPlayer = async (
     updatedName: string,
-    updatedChips: number,
+    endgameChips: number,
   ) => {
     try {
       const updatedPlayer = {
         ...player,
         name: updatedName,
-        chips: updatedChips,
+        chips: endgameChips,
       } as Player;
 
       await updatePlayer(playerId, updatedPlayer);
@@ -114,7 +114,7 @@ const PlayerDetails = () => {
           onEdit={() => setEditModalVisible(true)}
         />
         <PlayerInfo
-          label="Chips"
+          label="Buy-In Chips"
           value={player?.chips?.toString()}
           onEdit={() => setEditModalVisible(true)}
         />

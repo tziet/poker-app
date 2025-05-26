@@ -1,21 +1,28 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { View, Text, Image, ScrollView, TextInput } from "react-native";
+import {
+  View,
+  Text,
+  Image,
+  ScrollView,
+  TextInput,
+  TouchableOpacity,
+  Alert,
+} from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import {
   getActiveSession,
   getAllPlayers,
   getTableMoneySum,
-} from "@/app/services/firebase";
-import { icons } from "@/app/constants/icons";
+  updatePlayer,
+} from "@/services/firebase";
+import { icons } from "@/constants/icons";
 import GoBackButton from "@/app/components/GoBackButton";
 
 const MoneySummary = () => {
-  // Explicitly define the state shape
   type MoneySummaryState = {
     session: Session | null;
     moneySum: number;
     players: (Player | null)[];
-    currentChips: { [id: string]: number };
     debts: { lender: string; borrower: string; amount: number }[];
   };
 
@@ -23,7 +30,6 @@ const MoneySummary = () => {
     session: null,
     moneySum: 0,
     players: Array<Player | null>(8).fill(null),
-    currentChips: {},
     debts: [],
   });
 
@@ -33,7 +39,6 @@ const MoneySummary = () => {
       if (session) {
         console.log("Active session loaded:", session);
         fetchTableData(session);
-        // Update the state with the session
         setState((prev) => ({
           ...prev,
           session,
@@ -55,20 +60,10 @@ const MoneySummary = () => {
 
       console.log("Money and players loaded:", { moneySum, players });
 
-      const initialChips = players.reduce(
-        (acc, player) => {
-          if (player) acc[player.$id] = player.chips;
-          return acc;
-        },
-        {} as { [id: string]: number },
-      );
-
-      // Update state with fetched players and table data
       setState((prev) => ({
-        ...prev, // Ensures other fields like `debts` and `session` are preserved
-        moneySum: moneySum, // Explicitly assigning the value
-        players: players as (Player | null)[], // Type assertion ensures compatibility
-        currentChips: { ...initialChips }, // Properly typed object for currentChips
+        ...prev,
+        moneySum,
+        players: players || [],
       }));
     } catch (err) {
       console.error("Error fetching table data:", err);
@@ -76,12 +71,12 @@ const MoneySummary = () => {
   };
 
   const calculateTransactions = useCallback(() => {
-    const { players, currentChips } = state;
+    const { players } = state;
     const playersWithAmounts = players
       .filter((player): player is Player => player !== null)
       .map((player) => ({
         playerName: player.name,
-        netChange: currentChips[player.$id] - player.chips,
+        netChange: player.endgameChips - player.chips,
         id: player.$id,
       }));
 
@@ -113,30 +108,65 @@ const MoneySummary = () => {
     }
 
     return transactions;
-  }, [state.players, state.currentChips]);
+  }, [state.players]);
 
   useEffect(() => {
     const debts = calculateTransactions();
-    // Update state with calculated debts
     setState((prev) => ({
       ...prev,
       debts,
     }));
-  }, [state.currentChips, state.players, calculateTransactions]);
+  }, [state.players, calculateTransactions]);
 
   useEffect(() => {
     loadSession();
   }, [loadSession]);
 
-  const handleCurrentChipsChange = (id: string, value: string) => {
+  const handleEndgameChipsChange = (id: string, value: string) => {
     const parsedValue = parseInt(value, 10) || 0;
     setState((prev) => ({
       ...prev,
-      currentChips: {
-        ...prev.currentChips,
-        [id]: parsedValue,
-      },
+      players: prev.players.map((player) =>
+        player && player.$id === id
+          ? { ...player, endgameChips: parsedValue }
+          : player,
+      ),
     }));
+  };
+
+  const handleSaveChips = async () => {
+    const { players } = state;
+
+    // Filter out null players and those with unchanged `endgameChips`
+    const playersToUpdate = players.filter(
+      (player) => player && player.endgameChips !== player.chips,
+    ) as Player[];
+
+    if (playersToUpdate.length === 0) {
+      Alert.alert("No Changes", "No chips were updated.");
+      return;
+    }
+
+    try {
+      for (const player of playersToUpdate) {
+        await updatePlayer(player.$id, {
+          ...player,
+          endgameChips: player.endgameChips,
+        });
+      }
+
+      Alert.alert("Success", "Updated chips saved successfully.");
+      console.log("Updated chips saved:", playersToUpdate);
+
+      // Refresh the table data
+      if (state.session) fetchTableData(state.session);
+    } catch (error) {
+      console.error("Error saving updated chips:", error);
+      Alert.alert(
+        "Error",
+        "Failed to save the updated chips. Please try again.",
+      );
+    }
   };
 
   const { moneySum, players, debts } = state;
@@ -161,7 +191,7 @@ const MoneySummary = () => {
 
         <View className="flex-row items-center justify-between mt-3 bg-secondary p-4 rounded">
           <Text className="text-white text-lg font-bold">Players</Text>
-          <Text className="text-white text-lg font-bold">Current Chips</Text>
+          <Text className="text-white text-lg font-bold">Updated Chips</Text>
         </View>
 
         {players.map(
@@ -174,7 +204,7 @@ const MoneySummary = () => {
                 <View>
                   <Text className="text-white text-base">{player.name}</Text>
                   <Text className="text-white text-sm">
-                    Starting Chips: {player.chips}
+                    Buy-In Chips: {player.chips}
                   </Text>
                 </View>
 
@@ -182,10 +212,11 @@ const MoneySummary = () => {
                   <TextInput
                     className="rounded px-2 text-white bg-dark-200"
                     keyboardType="numeric"
-                    value={state.currentChips[player.$id]?.toString() || ""}
+                    value={player.endgameChips?.toString() || ""}
                     onChangeText={(value) =>
-                      handleCurrentChipsChange(player.$id, value)
+                      handleEndgameChipsChange(player.$id, value)
                     }
+                    maxLength={6}
                   />
                 </View>
               </View>
@@ -222,9 +253,16 @@ const MoneySummary = () => {
             </Text>
           )}
         </View>
-      </ScrollView>
 
-      <GoBackButton />
+        {/* Save Button */}
+        <TouchableOpacity
+          className="bg-blue-500 rounded-lg p-4 mt-6 mx-4"
+          onPress={handleSaveChips}
+        >
+          <Text className="text-white text-center text-lg font-bold">Save</Text>
+        </TouchableOpacity>
+        <GoBackButton />
+      </ScrollView>
     </View>
   );
 };

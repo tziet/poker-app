@@ -11,18 +11,18 @@ import {
 import { useFocusEffect } from "@react-navigation/native";
 import { Link } from "expo-router";
 
-import { images } from "@/app/constants/images";
-import { icons } from "@/app/constants/icons";
+import { images } from "@/constants/images";
+import { icons } from "@/constants/icons";
 import {
   createPlayer,
-  getActiveSession,
   getAllPlayers,
   createSession,
   updateSession,
-} from "@/app/services/firebase";
+} from "@/services/firebase";
 import CreatePlayerForm from "@/app/components/modals/CreatePlayerForm";
 import ConfirmForm from "@/app/components/modals/ConfirmForm";
-import { useSessionContext } from "@/app/contexts/SessionContext";
+import { useSessionContext } from "@/contexts/SessionContext";
+import useSession from "@/hooks/useSession";
 
 type ActionButtonProps = {
   onPress: () => void;
@@ -46,15 +46,23 @@ const ActionButton = forwardRef(
     ref: React.Ref<any>,
   ) => (
     <TouchableOpacity
-      ref={ref} // forward the ref
+      ref={ref}
       onPress={onPress}
-      style={style}
-      className="absolute items-center"
+      style={[style, { justifyContent: "center", alignItems: "center" }]}
+      className="absolute"
     >
-      {topText && <Text className="text-white text-sm mb-1">{topText}</Text>}
+      {topText && (
+        <Text
+          className="text-white text-sm mb-1"
+          numberOfLines={1}
+          ellipsizeMode="tail"
+        >
+          {topText}
+        </Text>
+      )}
       <Image
         source={icon}
-        className="w-6 h-6 text-white"
+        className="w-6 h-6"
         resizeMode="contain"
         tintColor={noTintColor ? undefined : "white"}
       />
@@ -66,7 +74,8 @@ const ActionButton = forwardRef(
 );
 
 const Table = () => {
-  const { reloadSessions } = useSessionContext();
+  const { session, loading, error, refetch } = useSession();
+  const { reloadSessions } = useSessionContext(); // Fetch reloadSessions from SessionContext
 
   const [modalState, setModalState] = useState({
     createPlayer: false,
@@ -74,29 +83,11 @@ const Table = () => {
     archiveSession: false,
   });
 
-  const [session, setSession] = useState<Session | null>(null);
   const [players, setPlayers] = useState<(Player | null)[]>(
     Array(8).fill(null),
   );
   const [selectedPosition, setSelectedPosition] = useState<number | null>(null);
 
-  /** Fetch and Load Session */
-  const loadSession = useCallback(async () => {
-    try {
-      const activeSession = await getActiveSession();
-      if (activeSession) {
-        setSession(activeSession);
-      } else {
-        console.warn("No active session found.");
-        setSession(null);
-      }
-    } catch (error) {
-      console.error("Failed to load session:", error);
-      alert("Failed to load session. Please try again.");
-    }
-  }, []);
-
-  /** Fetch and Load Players */
   const loadPlayers = useCallback(async () => {
     if (!session?.$id) {
       console.warn("Session ID is missing. Cannot fetch players.");
@@ -105,17 +96,15 @@ const Table = () => {
     try {
       const sessionPlayers = (await getAllPlayers(session.$id)) as Player[];
 
-      // Create an array of 8 seats initialized with null
       const updatedPlayers = Array(positions.length).fill(null);
 
-      // Map players to their respective seat positions (replace `seat` with the correct property)
       sessionPlayers.forEach((player) => {
         if (
           player.seat !== null &&
           player.seat >= 0 &&
           player.seat < positions.length
         ) {
-          updatedPlayers[player.seat] = player; // Place player in the correct seat
+          updatedPlayers[player.seat] = player;
         }
       });
 
@@ -125,11 +114,6 @@ const Table = () => {
       alert("Unable to load players. Please try again.");
     }
   }, [session]);
-
-  /** Effects for Loading Data */
-  useEffect(() => {
-    loadSession();
-  }, [loadSession]);
 
   useEffect(() => {
     if (session) loadPlayers();
@@ -141,10 +125,10 @@ const Table = () => {
     }, [session, loadPlayers]),
   );
 
-  /** Create Player */
   const handleCreatePlayer = async (data: {
     name: string;
     chips: number;
+    endgameChips: number;
     seat: number | null;
   }) => {
     if (!session?.$id || selectedPosition === null) {
@@ -165,15 +149,14 @@ const Table = () => {
     }
   };
 
-  /** Create a New Session */
   const handleCreateSession = async () => {
     try {
       const newSession = await createSession({
         date: new Date(),
         isActive: true,
       });
-      setSession(newSession);
-      reloadSessions(); // Refresh session list
+      reloadSessions(); // Update SessionContext
+      refetch(); // Refresh the session after creation
       closeModal("createSession");
     } catch (error) {
       console.error("Error creating session:", error);
@@ -181,7 +164,6 @@ const Table = () => {
     }
   };
 
-  /** Archive Current Session */
   const handleArchiveSession = async () => {
     if (!session?.$id) {
       alert("No current session to archive.");
@@ -189,8 +171,8 @@ const Table = () => {
     }
     try {
       await updateSession(session.$id, { ...session, isActive: false });
-      setSession(null);
-      reloadSessions();
+      reloadSessions(); // Update SessionContext
+      refetch(); // Refresh session after archiving
       closeModal("archiveSession");
       alert("Session successfully archived.");
     } catch (error) {
@@ -199,16 +181,13 @@ const Table = () => {
     }
   };
 
-  /** Handle Modal Open/Close */
   const openModal = (type: keyof typeof modalState) =>
     setModalState({ ...modalState, [type]: true });
   const closeModal = (type: keyof typeof modalState) =>
     setModalState({ ...modalState, [type]: false });
 
-  /** Modal Renderer */
   const renderModals = () => (
     <>
-      {/* Create Player Modal */}
       <Modal
         visible={modalState.createPlayer}
         transparent
@@ -223,7 +202,6 @@ const Table = () => {
         </View>
       </Modal>
 
-      {/* Create Session Modal */}
       <Modal
         visible={modalState.createSession}
         transparent
@@ -237,7 +215,6 @@ const Table = () => {
         </View>
       </Modal>
 
-      {/* Archive Session Modal */}
       <Modal
         visible={modalState.archiveSession}
         transparent
@@ -253,6 +230,22 @@ const Table = () => {
     </>
   );
 
+  if (loading) {
+    return (
+      <View className="flex-1 justify-center items-center bg-primary">
+        <Text className="text-white">Loading session...</Text>
+      </View>
+    );
+  }
+
+  if (error) {
+    return (
+      <View className="flex-1 justify-center items-center">
+        <Text>Error loading session: {error.message}</Text>
+      </View>
+    );
+  }
+
   return (
     <View className="flex-1 bg-primary relative">
       {/* Logo */}
@@ -263,24 +256,21 @@ const Table = () => {
         tintColor="white"
       />
 
-      {/* Action Buttons */}
-      <Link key={`moneyButton`} href={"/screens/moneySummary"} asChild>
-        <ActionButton
-          style={{ top: 100, left: 40 }}
-          icon={icons.cash}
-          onPress={() => {}}
-          noTintColor={true}
-        />
-      </Link>
-      <ActionButton
-        onPress={() => openModal("archiveSession")}
-        style={{ top: 100, right: 40 }}
-        icon={icons.sessions}
-      />
-
-      {/* Table and Players */}
       {session?.isActive ? (
         <View className="flex-1 justify-center items-center">
+          <Link key={`moneyButton`} href={"/screens/moneySummary"} asChild>
+            <ActionButton
+              style={{ top: 100, left: 40 }}
+              icon={icons.cash}
+              onPress={() => {}}
+              noTintColor={true}
+            />
+          </Link>
+          <ActionButton
+            onPress={() => openModal("archiveSession")}
+            style={{ top: 100, right: 40 }}
+            icon={icons.sessions}
+          />
           <Image
             source={images.pTable}
             className="w-64 h-64 z-0 rotate-90"
@@ -309,7 +299,7 @@ const Table = () => {
                   style={style}
                   icon={icons.user}
                   topText={players[i]?.name}
-                  bottomText={`Chips: ${players[i]?.chips || 0}`}
+                  bottomText={`${players[i]?.chips || 0}`}
                   onPress={() => {}}
                 />
               </Link>
@@ -334,8 +324,8 @@ const Table = () => {
 
 /** Positioning Logic */
 const iconSize = 24;
-const centerX = Dimensions.get("window").width / 2;
-const centerY = 450;
+const centerX = Dimensions.get("window").width / 2 - 15;
+const centerY = 445;
 const radiusX = 130;
 const radiusY = 240;
 
@@ -344,8 +334,12 @@ const positions: ViewStyle[] = Array.from({ length: 8 }).map((_, i) => {
   const rad = (angle * Math.PI) / 180;
   return {
     position: "absolute",
+    justifyContent: "center", // Ensures internal content is centered
+    alignItems: "center", // Horizontal centering
     top: centerY + radiusY * Math.sin(rad) - iconSize / 2,
     left: centerX + radiusX * Math.cos(rad) - iconSize / 2,
+    width: iconSize + 30, // Match icon size
+    height: iconSize, // Match icon size
   };
 });
 
