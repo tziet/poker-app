@@ -106,7 +106,7 @@ export const getActiveSession = async (): Promise<Session | null> => {
 
 export const getAllSessions = async (): Promise<(Session | null)[]> => {
   const playersRef = collection(db, "sessions");
-  const q = query(playersRef, orderBy("date", "asc")); // Order players by seat number
+  const q = query(playersRef, orderBy("date", "desc")); // Order players by seat number
 
   const snapshot = await getDocs(q);
 

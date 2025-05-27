@@ -211,6 +211,7 @@ const Table = () => {
           <ConfirmForm
             setModalVisible={() => closeModal("createSession")}
             onConfirm={handleCreateSession}
+            text="Are you sure you want to create a new session?"
           />
         </View>
       </Modal>
@@ -224,6 +225,7 @@ const Table = () => {
           <ConfirmForm
             setModalVisible={() => closeModal("archiveSession")}
             onConfirm={handleArchiveSession}
+            text="Are you sure you want to archive this session?"
           />
         </View>
       </Modal>

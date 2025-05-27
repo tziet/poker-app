@@ -4,12 +4,15 @@ import { View, Text, TouchableOpacity } from "react-native";
 type ConfirmFormProps = {
   setModalVisible: React.Dispatch<React.SetStateAction<boolean>>;
   onConfirm: () => void;
+  text?: string;
 };
 
 const ConfirmForm: React.FC<ConfirmFormProps> = (data: ConfirmFormProps) => {
   return (
     <View className="bg-white p-6 rounded-2xl w-4/5">
-      <Text className="text-gray-700">Are you sure?</Text>
+      <Text className="text-gray-700">
+        {data.text ? data.text : "Are you sure?"}
+      </Text>
 
       <View className="flex-row justify-between mt-4">
         <TouchableOpacity

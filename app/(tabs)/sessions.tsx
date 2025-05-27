@@ -1,11 +1,112 @@
-import { FlatList, Image, ScrollView, Text, View } from "react-native";
+import {
+  FlatList,
+  Image,
+  Modal,
+  ScrollView,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import { icons } from "@/constants/icons";
 import { useSessionContext } from "@/contexts/SessionContext";
 import useSession from "@/hooks/useSession";
+import { updateSession } from "@/services/firebase";
+import ConfirmForm from "@/app/components/modals/ConfirmForm";
+import React, { useState } from "react";
 
 const Sessions = () => {
   const { sessions } = useSessionContext();
-  const { session: activeSession, loading, error } = useSession();
+  const { session: activeSession, loading, error, refetch } = useSession();
+  const { reloadSessions } = useSessionContext(); // Fetch reloadSessions from SessionContext
+  const [selectedSession, setSelectedSession] = useState<Session | null>(null);
+
+  const [modalState, setModalState] = useState({
+    activateSession: false,
+  });
+
+  const openModal = (type: keyof typeof modalState) =>
+    setModalState({ ...modalState, [type]: true });
+  const closeModal = (type: keyof typeof modalState) =>
+    setModalState({ ...modalState, [type]: false });
+
+  const handleSessionPress = async (pressedSession: Session) => {
+    if (activeSession?.$id !== pressedSession.$id) {
+      try {
+        if (activeSession) {
+          await updateSession(activeSession.$id, {
+            ...activeSession,
+            isActive: false,
+          });
+        }
+        if (!pressedSession.isActive) {
+          await updateSession(pressedSession.$id, {
+            ...pressedSession,
+            isActive: true,
+          });
+          closeModal("activateSession");
+          alert("Session switched successfully.");
+        }
+      } catch (error) {
+        console.error("Error switching session:", error);
+        alert("Failed to switch session. Try again.");
+      }
+      setSelectedSession(null);
+      reloadSessions(); // Update SessionContext
+      refetch(); // Refresh session after archiving
+    }
+  };
+
+  const renderSessionItem = ({ item }: { item: Session }) => {
+    const sessionDate = item?.date?.toDate?.().toLocaleDateString("en-IL", {
+      timeZone: "Asia/Jerusalem",
+      month: "numeric",
+      day: "numeric",
+      year: "numeric",
+    });
+
+    const sessionTime = item?.date?.toDate?.().toLocaleTimeString("en-IL", {
+      timeZone: "Asia/Jerusalem",
+      hour: "numeric",
+      minute: "2-digit",
+    });
+
+    return (
+      <TouchableOpacity
+        className={`bg-${item.$id === activeSession?.$id ? "green-400" : "white"} rounded-lg shadow-lg p-4 m-2 w-[45%]`}
+        onPress={() => {
+          if (item.$id !== activeSession?.$id) {
+            openModal("activateSession");
+            setSelectedSession(item);
+          }
+        }}
+      >
+        <Text className="text-black font-semibold text-center">
+          {sessionDate}
+        </Text>
+        <Text className="text-gray-500 text-center mt-2">{`${sessionTime}${item.$id === activeSession?.$id ? " (Active session)" : ""}`}</Text>
+      </TouchableOpacity>
+    );
+  };
+
+  const renderModals = () => (
+    <>
+      <Modal
+        visible={modalState.activateSession}
+        transparent
+        animationType="slide"
+      >
+        <View className="flex-1 justify-center items-center bg-black/70">
+          <ConfirmForm
+            setModalVisible={() => closeModal("activateSession")}
+            onConfirm={() => {
+              handleSessionPress(selectedSession!);
+            }}
+            text="Are you sure you want to switch to this session?"
+          />
+        </View>
+      </Modal>
+    </>
+  );
 
   if (loading) {
     return (
@@ -25,32 +126,6 @@ const Sessions = () => {
     );
   }
 
-  const renderSessionItem = ({ item }: { item: Session }) => {
-    const sessionDate = item?.date?.toDate?.().toLocaleDateString("en-IL", {
-      timeZone: "Asia/Jerusalem",
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-    });
-
-    const sessionTime = item?.date?.toDate?.().toLocaleTimeString("en-IL", {
-      timeZone: "Asia/Jerusalem",
-      hour: "numeric",
-      minute: "2-digit",
-    });
-
-    return (
-      <View
-        className={`bg-${item.$id === activeSession?.$id ? "green-400" : "white"} rounded-lg shadow-lg p-4 m-2 w-[45%]`}
-      >
-        <Text className="text-black font-semibold text-center">
-          {sessionDate}
-        </Text>
-        <Text className="text-gray-500 text-center mt-2">{`${sessionTime}${item.$id === activeSession?.$id ? " (Active session)" : ""}`}</Text>
-      </View>
-    );
-  };
-
   return (
     <View className="flex-1 bg-primary" style={{ paddingBottom: 100 }}>
       {/* Logo */}
@@ -62,28 +137,32 @@ const Sessions = () => {
       />
 
       <View className="flex-1 pt-36">
-        <ScrollView
-          className="flex-1 px-5"
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={{ paddingBottom: 10 }}
-        >
-          <FlatList
-            data={sessions}
-            renderItem={renderSessionItem}
-            keyExtractor={(item) => item?.$id?.toString() || ""}
-            numColumns={2}
-            columnWrapperStyle={{ justifyContent: "space-between" }}
-            className="pb-32"
-            contentContainerStyle={{ paddingHorizontal: 10 }}
-            ListEmptyComponent={
-              <Text className="text-white text-center mt-10">
-                No Sessions Found
-              </Text>
-            }
-            scrollEnabled={false}
-          />
-        </ScrollView>
+        <FlatList
+          className="px-5"
+          data={sessions}
+          keyExtractor={(item) => item?.$id.toString()}
+          renderItem={renderSessionItem}
+          numColumns={2}
+          columnWrapperStyle={{
+            justifyContent: "flex-start",
+            gap: 16,
+            marginVertical: 16,
+          }}
+          contentContainerStyle={{
+            paddingBottom: 100,
+          }}
+          ListEmptyComponent={
+            !loading && !error ? (
+              <View className="mt-10 px-5">
+                <Text className="text-white text-center mt-10">
+                  No Sessions Found
+                </Text>
+              </View>
+            ) : null
+          }
+        />
       </View>
+      {renderModals()}
     </View>
   );
 };
