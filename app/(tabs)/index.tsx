@@ -7,10 +7,10 @@ import {
   Text,
   TouchableOpacity,
   ViewStyle,
+  ActivityIndicator,
 } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import { Link } from "expo-router";
-
 import { images } from "@/constants/images";
 import { icons } from "@/constants/icons";
 import {
@@ -150,34 +150,38 @@ const Table = () => {
   };
 
   const handleCreateSession = async () => {
-    try {
-      const newSession = await createSession({
-        date: new Date(),
-        isActive: true,
-      });
+    if (!session) {
+      try {
+        await createSession({
+          date: new Date(),
+          isActive: true,
+        });
+        closeModal("createSession");
+      } catch (error) {
+        console.error("Error creating session:", error);
+        alert("Could not create session. Try again.");
+      }
       reloadSessions(); // Update SessionContext
       refetch(); // Refresh the session after creation
-      closeModal("createSession");
-    } catch (error) {
-      console.error("Error creating session:", error);
-      alert("Could not create session. Try again.");
+    } else {
+      alert("You already have an active session.");
     }
   };
 
   const handleArchiveSession = async () => {
-    if (!session?.$id) {
-      alert("No current session to archive.");
-      return;
-    }
-    try {
-      await updateSession(session.$id, { ...session, isActive: false });
+    if (session) {
+      try {
+        await updateSession(session.$id, { ...session, isActive: false });
+        closeModal("archiveSession");
+        alert("Session successfully archived.");
+      } catch (error) {
+        console.error("Error archiving session:", error);
+        alert("Failed to archive session. Try again.");
+      }
       reloadSessions(); // Update SessionContext
       refetch(); // Refresh session after archiving
-      closeModal("archiveSession");
-      alert("Session successfully archived.");
-    } catch (error) {
-      console.error("Error archiving session:", error);
-      alert("Failed to archive session. Try again.");
+    } else {
+      alert("No current session to archive.");
     }
   };
 
@@ -232,33 +236,25 @@ const Table = () => {
     </>
   );
 
-  if (loading) {
-    return (
-      <View className="flex-1 justify-center items-center bg-primary">
-        <Text className="text-white">Loading session...</Text>
-      </View>
-    );
-  }
-
-  if (error) {
-    return (
-      <View className="flex-1 justify-center items-center">
-        <Text>Error loading session: {error.message}</Text>
-      </View>
-    );
-  }
-
   return (
     <View className="flex-1 bg-primary relative">
-      {/* Logo */}
       <Image
         source={icons.logo}
         className="w-12 h-10 absolute mt-20 mx-auto self-center"
         resizeMode="contain"
         tintColor="white"
       />
-
-      {session?.isActive ? (
+      {loading ? (
+        <ActivityIndicator
+          size="large"
+          color="#0000ff"
+          className="flex-1 self-center justify-center"
+        />
+      ) : error ? (
+        <View className="flex-1 justify-center items-center">
+          <Text>Error loading session: {error.message}</Text>
+        </View>
+      ) : session?.isActive ? (
         <View className="flex-1 justify-center items-center">
           <Link key={`moneyButton`} href={"/screens/moneySummary"} asChild>
             <ActionButton

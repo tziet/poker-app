@@ -1,4 +1,5 @@
 import {
+  ActivityIndicator,
   FlatList,
   Image,
   Modal,
@@ -29,7 +30,7 @@ const Sessions = () => {
   const closeModal = (type: keyof typeof modalState) =>
     setModalState({ ...modalState, [type]: false });
 
-  const handleSessionPress = async (pressedSession: Session) => {
+  const handleSessionChange = async (pressedSession: Session) => {
     if (activeSession?.$id !== pressedSession.$id) {
       try {
         if (activeSession) {
@@ -99,7 +100,7 @@ const Sessions = () => {
           <ConfirmForm
             setModalVisible={() => closeModal("activateSession")}
             onConfirm={() => {
-              handleSessionPress(selectedSession!);
+              handleSessionChange(selectedSession!);
             }}
             text="Are you sure you want to switch to this session?"
           />
@@ -108,60 +109,54 @@ const Sessions = () => {
     </>
   );
 
-  if (loading) {
-    return (
-      <View className="flex-1 justify-center items-center bg-primary">
-        <Text className="text-white">Loading sessions...</Text>
-      </View>
-    );
-  }
-
-  if (error) {
-    return (
-      <View className="flex-1 justify-center items-center bg-primary">
-        <Text className="text-red-500">
-          Error loading sessions: {error.message}
-        </Text>
-      </View>
-    );
-  }
-
   return (
     <View className="flex-1 bg-primary" style={{ paddingBottom: 100 }}>
-      {/* Logo */}
       <Image
         source={icons.logo}
         className="w-12 h-10 absolute mt-20 mx-auto self-center"
         resizeMode="contain"
         tintColor="white"
       />
-
-      <View className="flex-1 pt-36">
-        <FlatList
-          className="px-5"
-          data={sessions}
-          keyExtractor={(item) => item?.$id.toString()}
-          renderItem={renderSessionItem}
-          numColumns={2}
-          columnWrapperStyle={{
-            justifyContent: "flex-start",
-            gap: 16,
-            marginVertical: 16,
-          }}
-          contentContainerStyle={{
-            paddingBottom: 100,
-          }}
-          ListEmptyComponent={
-            !loading && !error ? (
-              <View className="mt-10 px-5">
-                <Text className="text-white text-center mt-10">
-                  No Sessions Found
-                </Text>
-              </View>
-            ) : null
-          }
+      {loading ? (
+        <ActivityIndicator
+          size="large"
+          color="#0000ff"
+          className="flex-1 self-center justify-center"
         />
-      </View>
+      ) : error ? (
+        <View className="flex-1 justify-center items-center bg-primary">
+          <Text className="text-red-500">
+            Error loading sessions: {error.message}
+          </Text>
+        </View>
+      ) : (
+        <View className="flex-1 pt-36">
+          <FlatList
+            className="px-5"
+            data={sessions}
+            keyExtractor={(item) => item?.$id.toString()}
+            renderItem={renderSessionItem}
+            numColumns={2}
+            columnWrapperStyle={{
+              justifyContent: "flex-start",
+              gap: 16,
+              marginVertical: 16,
+            }}
+            contentContainerStyle={{
+              paddingBottom: 100,
+            }}
+            ListEmptyComponent={
+              !loading && !error ? (
+                <View className="mt-10 px-5">
+                  <Text className="text-white text-center mt-10">
+                    No Sessions Found
+                  </Text>
+                </View>
+              ) : null
+            }
+          />
+        </View>
+      )}
       {renderModals()}
     </View>
   );
