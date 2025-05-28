@@ -98,10 +98,8 @@ const Sessions = () => {
       >
         <View className="flex-1 justify-center items-center bg-black/70">
           <ConfirmForm
-            setModalVisible={() => closeModal("activateSession")}
-            onConfirm={() => {
-              handleSessionChange(selectedSession!);
-            }}
+            onClose={() => closeModal("activateSession")}
+            onSubmit={() => handleSessionChange(selectedSession!)}
             text="Are you sure you want to switch to this session?"
           />
         </View>

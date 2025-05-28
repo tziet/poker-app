@@ -213,8 +213,8 @@ const Table = () => {
       >
         <View className="flex-1 justify-center items-center bg-black/70">
           <ConfirmForm
-            setModalVisible={() => closeModal("createSession")}
-            onConfirm={handleCreateSession}
+            onClose={() => closeModal("createSession")}
+            onSubmit={handleCreateSession}
             text="Are you sure you want to create a new session?"
           />
         </View>
@@ -227,8 +227,8 @@ const Table = () => {
       >
         <View className="flex-1 justify-center items-center bg-black/70">
           <ConfirmForm
-            setModalVisible={() => closeModal("archiveSession")}
-            onConfirm={handleArchiveSession}
+            onClose={() => closeModal("archiveSession")}
+            onSubmit={handleArchiveSession}
             text="Are you sure you want to archive this session?"
           />
         </View>
