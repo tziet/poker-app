@@ -23,6 +23,7 @@ const PlayerDetails = () => {
   const playerId = typeof id === "string" ? id : id?.[0] || "";
   const [player, setPlayer] = useState<Player | null>(null);
   const [loading, setLoading] = useState(true);
+
   const [modalState, setModalState] = useState({
     editPlayer: false,
     deletePlayer: false,

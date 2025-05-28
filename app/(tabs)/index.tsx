@@ -21,7 +21,7 @@ import {
 import CreatePlayerForm from "@/app/components/forms/CreatePlayerForm";
 import ConfirmForm from "@/app/components/forms/ConfirmForm";
 import { useSessionContext } from "@/contexts/SessionContext";
-import useSession from "@/hooks/useSession";
+import useActiveSession from "@/hooks/useSession";
 import ShowModal from "@/app/components/ui/ShowModal";
 
 type ActionButtonProps = {
@@ -74,7 +74,7 @@ const ActionButton = forwardRef(
 );
 
 const Table = () => {
-  const { session, loading, error, refetch } = useSession();
+  const { session, loading, error, refetch } = useActiveSession();
   const { reloadSessions } = useSessionContext(); // Fetch reloadSessions from SessionContext
 
   const [modalState, setModalState] = useState({

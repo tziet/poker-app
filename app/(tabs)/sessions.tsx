@@ -8,7 +8,7 @@ import {
 } from "react-native";
 import { icons } from "@/constants/icons";
 import { useSessionContext } from "@/contexts/SessionContext";
-import useSession from "@/hooks/useSession";
+import useActiveSession from "@/hooks/useSession";
 import { updateSession } from "@/services/firebase";
 import ConfirmForm from "@/app/components/forms/ConfirmForm";
 import React, { useState } from "react";
@@ -16,7 +16,12 @@ import ShowModal from "@/app/components/ui/ShowModal";
 
 const Sessions = () => {
   const { sessions } = useSessionContext();
-  const { session: activeSession, loading, error, refetch } = useSession();
+  const {
+    session: activeSession,
+    loading,
+    error,
+    refetch,
+  } = useActiveSession();
   const { reloadSessions } = useSessionContext(); // Fetch reloadSessions from SessionContext
   const [selectedSession, setSelectedSession] = useState<Session | null>(null);
 

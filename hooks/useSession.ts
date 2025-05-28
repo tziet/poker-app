@@ -1,12 +1,8 @@
 import useFetch from "@/services/useFetch";
 import { getActiveSession } from "@/services/firebase";
 
-const useSession = () => {
+const useActiveSession = () => {
   const { data, loading, error, refetch } = useFetch(getActiveSession);
-
-  if (error) {
-    console.error("Error fetching session:", error);
-  }
 
   return {
     session: data,
@@ -16,4 +12,4 @@ const useSession = () => {
   };
 };
 
-export default useSession;
+export default useActiveSession;

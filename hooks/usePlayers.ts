@@ -1,7 +1,7 @@
 import useFetch from "@/services/useFetch";
 import { getAllPlayers } from "@/services/firebase";
 
-const usePlayers = (sessionId: string | null) => {
+const useSessionPlayers = (sessionId: string | null) => {
   const { data, loading, error, refetch } = useFetch(() => {
     if (!sessionId) throw new Error("Session ID is required.");
     return getAllPlayers(sessionId);
@@ -10,4 +10,4 @@ const usePlayers = (sessionId: string | null) => {
   return { players: data, loading, error, refetch };
 };
 
-export default usePlayers;
+export default useSessionPlayers;
