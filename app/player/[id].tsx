@@ -27,6 +27,15 @@ const PlayerDetails = () => {
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
   const [editModalVisible, setEditModalVisible] = useState(false);
 
+  const [modalState, setModalState] = useState({
+    editPlayer: false,
+    deletePlayer: false,
+  });
+  const openModal = (type: keyof typeof modalState) =>
+    setModalState({ ...modalState, [type]: true });
+  const closeModal = (type: keyof typeof modalState) =>
+    setModalState({ ...modalState, [type]: false });
+
   /** Fetch Player Details */
 
   useEffect(() => {
@@ -111,12 +120,12 @@ const PlayerDetails = () => {
         <PlayerInfo
           label="Name"
           value={player?.name}
-          onEdit={() => setEditModalVisible(true)}
+          onEdit={() => openModal("editPlayer")}
         />
         <PlayerInfo
           label="Buy-In Chips"
           value={player?.chips?.toString()}
-          onEdit={() => setEditModalVisible(true)}
+          onEdit={() => openModal("editPlayer")}
         />
         <PlayerInfo
           label="Seat"
@@ -127,13 +136,13 @@ const PlayerDetails = () => {
       {/* Buttons */}
       <View className="mt-8 px-5">
         <ActionButton
-          onPress={() => setEditModalVisible(true)}
+          onPress={() => openModal("editPlayer")}
           color="orange-500"
           icon={icons.edit}
           text="Edit Player"
         />
         <ActionButton
-          onPress={() => setDeleteModalVisible(true)}
+          onPress={() => openModal("deletePlayer")}
           color="red-900"
           icon={icons.removeUser}
           text="Delete Player"
@@ -141,23 +150,17 @@ const PlayerDetails = () => {
       </View>
 
       {/* Modals */}
-      <CustomModal
-        visible={deleteModalVisible}
-        onClose={() => setDeleteModalVisible(false)}
-      >
+      <CustomModal visible={modalState.deletePlayer}>
         <ConfirmForm
-          setModalVisible={setDeleteModalVisible}
-          onConfirm={handleDeletePlayer}
+          onClose={() => closeModal("deletePlayer")}
+          onSubmit={handleDeletePlayer}
         />
       </CustomModal>
 
-      <CustomModal
-        visible={editModalVisible}
-        onClose={() => setEditModalVisible(false)}
-      >
+      <CustomModal visible={modalState.editPlayer}>
         <EditAttributeForm
           id={playerId}
-          onClose={() => setEditModalVisible(false)}
+          onClose={() => closeModal("editPlayer")}
           onSubmit={handleEditPlayer}
         />
       </CustomModal>
@@ -215,11 +218,9 @@ const ActionButton = ({
 /** Reusable Modal Wrapper */
 const CustomModal = ({
   visible,
-  onClose,
   children,
 }: {
   visible: boolean;
-  onClose: () => void;
   children: React.ReactNode;
 }) => (
   <Modal visible={visible} animationType="slide" transparent>
