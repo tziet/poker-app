@@ -4,11 +4,11 @@ import TextInputField from "@/app/components/inputs/TextInputField";
 import ButtonRow from "@/app/components/ui/ButtonRow";
 import { getPlayerDetails } from "@/services/firebase";
 
-interface EditFormProps {
+type EditFormProps = {
   id: string;
   onClose: () => void;
   onSubmit: (name: string, chips: number) => void;
-}
+};
 
 const EditAttributeForm = ({ id, onClose, onSubmit }: EditFormProps) => {
   const [name, setName] = useState("");

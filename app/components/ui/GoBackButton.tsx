@@ -1,5 +1,5 @@
 import React from "react";
-import { View, Text, Image, TouchableOpacity } from "react-native";
+import { Text, Image, TouchableOpacity } from "react-native";
 import { router } from "expo-router";
 import { icons } from "@/constants/icons";
 

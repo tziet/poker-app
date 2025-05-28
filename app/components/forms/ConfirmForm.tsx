@@ -4,12 +4,14 @@ import { View, Text, TouchableOpacity } from "react-native";
 type ConfirmFormProps = {
   onClose: () => void;
   onSubmit: () => void;
+  submitText?: string;
   text?: string;
 };
 
 const ConfirmForm: React.FC<ConfirmFormProps> = ({
   onClose,
   onSubmit,
+  submitText,
   text,
 }: ConfirmFormProps) => {
   return (
@@ -28,7 +30,9 @@ const ConfirmForm: React.FC<ConfirmFormProps> = ({
           onPress={onSubmit}
           className="px-4 py-2 rounded-lg bg-blue-500"
         >
-          <Text className="text-white font-bold">Confirm</Text>
+          <Text className="text-white font-bold">
+            {submitText ? submitText : "Confirm"}
+          </Text>
         </TouchableOpacity>
       </View>
     </View>

@@ -16,7 +16,7 @@ import {
   updatePlayer,
 } from "@/services/firebase";
 import { icons } from "@/constants/icons";
-import GoBackButton from "@/app/components/GoBackButton";
+import GoBackButton from "@/app/components/ui/GoBackButton";
 
 const MoneySummary = () => {
   type MoneySummaryState = {

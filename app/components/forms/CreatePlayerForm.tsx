@@ -1,5 +1,7 @@
 import React, { useState } from "react";
 import { View, Text, TextInput, TouchableOpacity } from "react-native";
+import TextInputField from "@/app/components/inputs/TextInputField";
+import ButtonRow from "@/app/components/ui/ButtonRow";
 
 type Props = {
   onClose: () => void;
@@ -33,45 +35,26 @@ const CreatePlayerForm = ({ onClose, onSubmit, selectedSeat }: Props) => {
   };
 
   return (
-    <View className="bg-white p-6 rounded-2xl w-4/5">
+    <View className="bg-white p-5 rounded-2xl w-4/5">
       <Text className="text-xl font-bold mb-4 text-center">
         Create New Player
       </Text>
-
-      <Text className="text-sm text-gray-700 mb-1">Name</Text>
-      <TextInput
+      <TextInputField
+        label="Name"
         value={name}
         onChangeText={setName}
-        placeholder="e.g. Messi"
-        className="border border-gray-300 rounded-lg px-3 py-2 mb-4"
         maxLength={10}
+        placeholder="e.g. Namer Hakesef"
       />
-
-      <Text className="text-sm text-gray-700 mb-1">Buy-In Chips</Text>
-      <TextInput
+      <TextInputField
+        label="Buy-In Chips"
         value={chips}
         onChangeText={setChips}
-        placeholder="e.g. 1000"
         keyboardType="numeric"
-        className="border border-gray-300 rounded-lg px-3 py-2 mb-4"
         maxLength={6}
+        placeholder="e.g. 100"
       />
-
-      <View className="flex-row justify-between mt-4">
-        <TouchableOpacity
-          onPress={onClose}
-          className="px-4 py-2 rounded-lg bg-gray-200"
-        >
-          <Text className="text-gray-700">Cancel</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          onPress={handleSubmit}
-          className="px-4 py-2 rounded-lg bg-blue-500"
-        >
-          <Text className="text-white font-bold">Create</Text>
-        </TouchableOpacity>
-      </View>
+      <ButtonRow onCancel={onClose} onSubmit={handleSubmit} />
     </View>
   );
 };

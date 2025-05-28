@@ -1,31 +1,27 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
   TouchableOpacity,
-  Modal,
   Image,
   ActivityIndicator,
 } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
-import GoBackButton from "@/app/components/GoBackButton";
-import ConfirmForm from "@/app/components/modals/ConfirmForm";
-import EditAttributeForm from "@/app/components/modals/EditAttributeForm";
+import GoBackButton from "@/app/components/ui/GoBackButton";
+import ConfirmForm from "@/app/components/forms/ConfirmForm";
 import {
   deletePlayer,
   getPlayerDetails,
   updatePlayer,
 } from "@/services/firebase";
 import { icons } from "@/constants/icons";
+import ShowModal from "@/app/components/ui/ShowModal";
 
 const PlayerDetails = () => {
   const { id } = useLocalSearchParams();
   const playerId = typeof id === "string" ? id : id?.[0] || "";
-
   const [player, setPlayer] = useState<Player | null>(null);
   const [loading, setLoading] = useState(true);
-  const [deleteModalVisible, setDeleteModalVisible] = useState(false);
-  const [editModalVisible, setEditModalVisible] = useState(false);
 
   const [modalState, setModalState] = useState({
     editPlayer: false,
@@ -35,8 +31,6 @@ const PlayerDetails = () => {
     setModalState({ ...modalState, [type]: true });
   const closeModal = (type: keyof typeof modalState) =>
     setModalState({ ...modalState, [type]: false });
-
-  /** Fetch Player Details */
 
   useEffect(() => {
     const fetchPlayerDetails = async () => {
@@ -53,7 +47,6 @@ const PlayerDetails = () => {
     fetchPlayerDetails();
   }, [playerId]);
 
-  /** Handle Delete */
   const handleDeletePlayer = async () => {
     try {
       if (player) {
@@ -65,11 +58,10 @@ const PlayerDetails = () => {
       console.error("Error deleting player:", error);
       alert("Failed to delete player.");
     } finally {
-      setDeleteModalVisible(false);
+      closeModal("deletePlayer");
     }
   };
 
-  /** Handle Edit */
   const handleEditPlayer = async (
     updatedName: string,
     endgameChips: number,
@@ -88,8 +80,41 @@ const PlayerDetails = () => {
       console.error("Error updating player:", error);
       alert("Failed to update player.");
     } finally {
-      setEditModalVisible(false);
+      closeModal("editPlayer");
     }
+  };
+
+  const renderModals = () => {
+    return (
+      <ShowModal
+        modals={[
+          {
+            visible: modalState.deletePlayer,
+            form: (
+              <ConfirmForm
+                onClose={() => closeModal("deletePlayer")}
+                onSubmit={handleDeletePlayer}
+                submitText="Delete Player"
+                text="Are you sure you want to delete this player?"
+                key={`deletePlayerForm`}
+              />
+            ),
+          },
+          {
+            visible: modalState.editPlayer,
+            form: (
+              <ConfirmForm
+                onClose={() => closeModal("deletePlayer")}
+                onSubmit={handleDeletePlayer}
+                submitText="Delete Player"
+                text="Are you sure you want to delete this player?"
+                key={`deletePlayerForm`}
+              />
+            ),
+          },
+        ]}
+      />
+    );
   };
 
   if (loading) {
@@ -149,28 +174,12 @@ const PlayerDetails = () => {
         />
       </View>
 
-      {/* Modals */}
-      <CustomModal visible={modalState.deletePlayer}>
-        <ConfirmForm
-          onClose={() => closeModal("deletePlayer")}
-          onSubmit={handleDeletePlayer}
-        />
-      </CustomModal>
-
-      <CustomModal visible={modalState.editPlayer}>
-        <EditAttributeForm
-          id={playerId}
-          onClose={() => closeModal("editPlayer")}
-          onSubmit={handleEditPlayer}
-        />
-      </CustomModal>
-
+      {renderModals()}
       <GoBackButton />
     </View>
   );
 };
 
-/** Player Info Component */
 const PlayerInfo = ({
   label,
   value,
@@ -194,7 +203,6 @@ const PlayerInfo = ({
   </View>
 );
 
-/** Reusable Action Button */
 const ActionButton = ({
   onPress,
   color,
@@ -213,21 +221,6 @@ const ActionButton = ({
     <Image source={icon} className="w-5 h-5 mr-1" tintColor="#fff" />
     <Text className="text-white font-semibold text-lg">{text}</Text>
   </TouchableOpacity>
-);
-
-/** Reusable Modal Wrapper */
-const CustomModal = ({
-  visible,
-  children,
-}: {
-  visible: boolean;
-  children: React.ReactNode;
-}) => (
-  <Modal visible={visible} animationType="slide" transparent>
-    <View className="flex-1 justify-center items-center bg-black/70">
-      <View className="bg-white p-6 rounded-xl w-4/5">{children}</View>
-    </View>
-  </Modal>
 );
 
 export default PlayerDetails;

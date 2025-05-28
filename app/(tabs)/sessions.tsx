@@ -2,8 +2,6 @@ import {
   ActivityIndicator,
   FlatList,
   Image,
-  Modal,
-  ScrollView,
   Text,
   TouchableOpacity,
   View,
@@ -12,8 +10,9 @@ import { icons } from "@/constants/icons";
 import { useSessionContext } from "@/contexts/SessionContext";
 import useSession from "@/hooks/useSession";
 import { updateSession } from "@/services/firebase";
-import ConfirmForm from "@/app/components/modals/ConfirmForm";
+import ConfirmForm from "@/app/components/forms/ConfirmForm";
 import React, { useState } from "react";
+import ShowModal from "@/app/components/ui/ShowModal";
 
 const Sessions = () => {
   const { sessions } = useSessionContext();
@@ -24,7 +23,6 @@ const Sessions = () => {
   const [modalState, setModalState] = useState({
     activateSession: false,
   });
-
   const openModal = (type: keyof typeof modalState) =>
     setModalState({ ...modalState, [type]: true });
   const closeModal = (type: keyof typeof modalState) =>
@@ -89,23 +87,26 @@ const Sessions = () => {
     );
   };
 
-  const renderModals = () => (
-    <>
-      <Modal
-        visible={modalState.activateSession}
-        transparent
-        animationType="slide"
-      >
-        <View className="flex-1 justify-center items-center bg-black/70">
-          <ConfirmForm
-            onClose={() => closeModal("activateSession")}
-            onSubmit={() => handleSessionChange(selectedSession!)}
-            text="Are you sure you want to switch to this session?"
-          />
-        </View>
-      </Modal>
-    </>
-  );
+  const renderModals = () => {
+    return (
+      <ShowModal
+        modals={[
+          {
+            visible: modalState.activateSession,
+            form: (
+              <ConfirmForm
+                onClose={() => closeModal("activateSession")}
+                onSubmit={() => handleSessionChange(selectedSession!)}
+                submitText="Switch Session"
+                text="Are you sure you want to switch to this session?"
+                key={"activateSessionForm"}
+              />
+            ),
+          },
+        ]}
+      />
+    );
+  };
 
   return (
     <View className="flex-1 bg-primary" style={{ paddingBottom: 100 }}>

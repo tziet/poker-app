@@ -3,7 +3,6 @@ import {
   View,
   Image,
   Dimensions,
-  Modal,
   Text,
   TouchableOpacity,
   ViewStyle,
@@ -19,10 +18,11 @@ import {
   createSession,
   updateSession,
 } from "@/services/firebase";
-import CreatePlayerForm from "@/app/components/modals/CreatePlayerForm";
-import ConfirmForm from "@/app/components/modals/ConfirmForm";
+import CreatePlayerForm from "@/app/components/forms/CreatePlayerForm";
+import ConfirmForm from "@/app/components/forms/ConfirmForm";
 import { useSessionContext } from "@/contexts/SessionContext";
 import useSession from "@/hooks/useSession";
+import ShowModal from "@/app/components/ui/ShowModal";
 
 type ActionButtonProps = {
   onPress: () => void;
@@ -82,6 +82,10 @@ const Table = () => {
     createSession: false,
     archiveSession: false,
   });
+  const openModal = (type: keyof typeof modalState) =>
+    setModalState({ ...modalState, [type]: true });
+  const closeModal = (type: keyof typeof modalState) =>
+    setModalState({ ...modalState, [type]: false });
 
   const [players, setPlayers] = useState<(Player | null)[]>(
     Array(8).fill(null),
@@ -185,56 +189,49 @@ const Table = () => {
     }
   };
 
-  const openModal = (type: keyof typeof modalState) =>
-    setModalState({ ...modalState, [type]: true });
-  const closeModal = (type: keyof typeof modalState) =>
-    setModalState({ ...modalState, [type]: false });
-
-  const renderModals = () => (
-    <>
-      <Modal
-        visible={modalState.createPlayer}
-        transparent
-        animationType="slide"
-      >
-        <View className="flex-1 justify-center items-center bg-black/60">
-          <CreatePlayerForm
-            onClose={() => closeModal("createPlayer")}
-            onSubmit={handleCreatePlayer}
-            selectedSeat={selectedPosition}
-          />
-        </View>
-      </Modal>
-
-      <Modal
-        visible={modalState.createSession}
-        transparent
-        animationType="slide"
-      >
-        <View className="flex-1 justify-center items-center bg-black/70">
-          <ConfirmForm
-            onClose={() => closeModal("createSession")}
-            onSubmit={handleCreateSession}
-            text="Are you sure you want to create a new session?"
-          />
-        </View>
-      </Modal>
-
-      <Modal
-        visible={modalState.archiveSession}
-        transparent
-        animationType="slide"
-      >
-        <View className="flex-1 justify-center items-center bg-black/70">
-          <ConfirmForm
-            onClose={() => closeModal("archiveSession")}
-            onSubmit={handleArchiveSession}
-            text="Are you sure you want to archive this session?"
-          />
-        </View>
-      </Modal>
-    </>
-  );
+  const renderModals = () => {
+    return (
+      <ShowModal
+        modals={[
+          {
+            visible: modalState.createPlayer,
+            form: (
+              <CreatePlayerForm
+                onClose={() => closeModal("createPlayer")}
+                onSubmit={handleCreatePlayer}
+                selectedSeat={selectedPosition}
+                key={`createPlayerForm`}
+              />
+            ),
+          },
+          {
+            visible: modalState.createSession,
+            form: (
+              <ConfirmForm
+                onClose={() => closeModal("createSession")}
+                onSubmit={handleCreateSession}
+                submitText="Create Session"
+                text="Are you sure you want to create a new session?"
+                key={`createSessionForm`}
+              />
+            ),
+          },
+          {
+            visible: modalState.archiveSession,
+            form: (
+              <ConfirmForm
+                onClose={() => closeModal("archiveSession")}
+                onSubmit={handleArchiveSession}
+                submitText="Archive Session"
+                text="Are you sure you want to archive this session?"
+                key={`archiveSessionForm`}
+              />
+            ),
+          },
+        ]}
+      />
+    );
+  };
 
   return (
     <View className="flex-1 bg-primary relative">
