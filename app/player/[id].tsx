@@ -9,6 +9,7 @@ import {
 import { router, useLocalSearchParams } from "expo-router";
 import GoBackButton from "@/app/components/ui/GoBackButton";
 import ConfirmForm from "@/app/components/forms/ConfirmForm";
+import EditAttributeForm from "@/app/components/forms/EditAttributeForm";
 import {
   deletePlayer,
   getPlayerDetails,
@@ -22,7 +23,6 @@ const PlayerDetails = () => {
   const playerId = typeof id === "string" ? id : id?.[0] || "";
   const [player, setPlayer] = useState<Player | null>(null);
   const [loading, setLoading] = useState(true);
-
   const [modalState, setModalState] = useState({
     editPlayer: false,
     deletePlayer: false,
@@ -103,12 +103,11 @@ const PlayerDetails = () => {
           {
             visible: modalState.editPlayer,
             form: (
-              <ConfirmForm
-                onClose={() => closeModal("deletePlayer")}
-                onSubmit={handleDeletePlayer}
-                submitText="Delete Player"
-                text="Are you sure you want to delete this player?"
-                key={`deletePlayerForm`}
+              <EditAttributeForm
+                id={playerId}
+                onClose={() => closeModal("editPlayer")}
+                onSubmit={handleEditPlayer}
+                key={`editPlayerForm`}
               />
             ),
           },
