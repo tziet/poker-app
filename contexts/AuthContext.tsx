@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { User } from "firebase/auth";
-import { subscribeToAuthChanges } from "../services/auth";
+import { subscribeToAuthChanges } from "@/services/auth";
 import { useRouter, useSegments } from "expo-router";
 
 interface AuthContextType {
@@ -34,19 +34,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     if (loading) return;
 
     const inAuthGroup = segments[0] === "(auth)";
+    const inTabsGroup = segments[0] === "(tabs)";
 
     if (!user && !inAuthGroup) {
-      // Redirect to login if user is not authenticated
-      router.replace("/(auth)/login");
+      router.replace("/(auth)/landingScreen");
     } else if (user && inAuthGroup) {
-      // Redirect to home if user is authenticated and in auth group
       router.replace("/(tabs)");
+    } else if (!user && inTabsGroup) {
+      router.replace("/(auth)/landingScreen");
     }
   }, [user, loading, segments]);
 
   return (
     <AuthContext.Provider value={{ user, loading }}>
-      {children}
+      {!loading && children}
     </AuthContext.Provider>
   );
 };

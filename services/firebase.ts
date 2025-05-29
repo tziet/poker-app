@@ -18,6 +18,8 @@ export const firebaseConfig = {
   authDomain: process.env.EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN,
   projectId: process.env.EXPO_PUBLIC_FIREBASE_PROJECT_ID,
   storageBucket: process.env.EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.EXPO_PUBLIC_FIREBASE_APP_ID,
 };
 
 export const db = getFirestore(initializeApp(firebaseConfig));
@@ -84,10 +86,14 @@ export const createSession = async (data: NewSession): Promise<Session> => {
   };
 };
 
-export const getActiveSession = async (): Promise<Session | null> => {
+export const getActiveSession = async (
+  userId: string | null,
+): Promise<Session | null> => {
+  if (!userId) return null;
+
   const q = query(
     collection(db, "sessions"),
-    // where("userId", "==", userId),
+    where("userId", "==", userId),
     where("isActive", "==", true),
   );
 
@@ -104,10 +110,14 @@ export const getActiveSession = async (): Promise<Session | null> => {
   } as Session;
 };
 
-export const getAllSessions = async (): Promise<(Session | null)[]> => {
+export const getAllSessions = async (
+  userId: string | null,
+): Promise<(Session | null)[]> => {
+  if (!userId) return [];
+
   const q = query(
     collection(db, "sessions"),
-    // where("userId", "==", userId),
+    where("userId", "==", userId),
     orderBy("date", "desc"),
   );
 

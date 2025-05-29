@@ -17,6 +17,7 @@ import {
 } from "@/services/firebase";
 import { icons } from "@/constants/icons";
 import GoBackButton from "@/app/components/ui/GoBackButton";
+import { useAuth } from "@/contexts/AuthContext";
 
 const MoneySummary = () => {
   type MoneySummaryState = {
@@ -33,9 +34,12 @@ const MoneySummary = () => {
     debts: [],
   });
 
+  const { user } = useAuth();
+
   const loadSession = useCallback(async () => {
+    if (!user) return;
     try {
-      const session = await getActiveSession();
+      const session = await getActiveSession(user.uid);
       if (session) {
         console.log("Active session loaded:", session);
         fetchTableData(session);

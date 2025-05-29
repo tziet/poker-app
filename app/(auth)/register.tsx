@@ -7,17 +7,18 @@ import {
   TouchableOpacity,
   Alert,
 } from "react-native";
-import { useRouter } from "expo-router";
-import { loginWithEmailPassword } from "@/services/auth";
+import { useRouter, Link } from "expo-router";
+import { signUpWithEmailPassword } from "@/services/auth";
 
-const LoginScreen = () => {
+const RegisterScreen = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
 
-  const handleLogin = async () => {
+  const handleRegister = async () => {
     if (isLoading) return;
 
     if (!email.trim() || !password.trim()) {
@@ -25,9 +26,14 @@ const LoginScreen = () => {
       return;
     }
 
+    if (password !== confirmPassword) {
+      setError("Passwords do not match");
+      return;
+    }
+
     setIsLoading(true);
     try {
-      await loginWithEmailPassword(email, password);
+      await signUpWithEmailPassword(email, password);
       // The AuthContext will automatically redirect to main app
     } catch (err: any) {
       setError(err.message);
@@ -62,20 +68,37 @@ const LoginScreen = () => {
         selectionColor="white"
       />
 
+      <TextInput
+        placeholder="Confirm Password"
+        value={confirmPassword}
+        onChangeText={setConfirmPassword}
+        secureTextEntry
+        style={styles.input}
+        placeholderTextColor="#666"
+        selectionColor="white"
+      />
+
       <View style={styles.buttonContainer}>
         <TouchableOpacity
           disabled={isLoading}
           style={styles.button}
-          onPress={handleLogin}
+          onPress={handleRegister}
         >
           <Text style={styles.buttonText}>
-            {isLoading ? "Logging in..." : "Login"}
+            {isLoading ? "Registering..." : "Register"}
           </Text>
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.button} onPress={() => router.back()}>
           <Text style={styles.buttonText}>Back</Text>
         </TouchableOpacity>
+      </View>
+
+      <View style={styles.footer}>
+        <Text style={styles.text}>Already have an account? </Text>
+        <Link href="/(auth)/login" style={styles.link}>
+          Login
+        </Link>
       </View>
     </View>
   );
@@ -101,6 +124,18 @@ const styles = StyleSheet.create({
     color: "red",
     marginBottom: 10,
   },
+  footer: {
+    flexDirection: "row",
+    justifyContent: "center",
+    marginTop: 20,
+  },
+  text: {
+    color: "white",
+  },
+  link: {
+    color: "#4E8EF7",
+    marginLeft: 5,
+  },
   buttonContainer: {
     gap: 16,
     marginBottom: 40,
@@ -118,4 +153,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default LoginScreen;
+export default RegisterScreen;

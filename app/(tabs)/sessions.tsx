@@ -11,10 +11,13 @@ import { useSessionContext } from "@/contexts/SessionContext";
 import useActiveSession from "@/hooks/useSession";
 import { updateSession } from "@/services/firebase";
 import ConfirmForm from "@/app/components/forms/ConfirmForm";
-import React, { useState } from "react";
+import React, { useCallback, useState } from "react";
 import ShowModal from "@/app/components/ui/ShowModal";
+import { useAuth } from "@/contexts/AuthContext";
+import { useFocusEffect } from "@react-navigation/native";
 
 const Sessions = () => {
+  const { user } = useAuth();
   const { sessions } = useSessionContext();
   const {
     session: activeSession,
@@ -22,7 +25,7 @@ const Sessions = () => {
     error,
     refetch,
   } = useActiveSession();
-  const { reloadSessions } = useSessionContext(); // Fetch reloadSessions from SessionContext
+  const { reloadSessions } = useSessionContext();
   const [selectedSession, setSelectedSession] = useState<Session | null>(null);
 
   const [modalState, setModalState] = useState({
@@ -32,6 +35,14 @@ const Sessions = () => {
     setModalState({ ...modalState, [type]: true });
   const closeModal = (type: keyof typeof modalState) =>
     setModalState({ ...modalState, [type]: false });
+
+  useFocusEffect(
+    useCallback(() => {
+      if (user) {
+        Promise.all([reloadSessions(), refetch()]);
+      }
+    }, [user]),
+  );
 
   const handleSessionChange = async (pressedSession: Session) => {
     if (activeSession?.$id !== pressedSession.$id) {
@@ -55,8 +66,8 @@ const Sessions = () => {
         alert("Failed to switch session. Try again.");
       }
       setSelectedSession(null);
-      reloadSessions(); // Update SessionContext
-      refetch(); // Refresh session after archiving
+      reloadSessions();
+      refetch();
     }
   };
 

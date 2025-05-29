@@ -23,6 +23,7 @@ import ConfirmForm from "@/app/components/forms/ConfirmForm";
 import { useSessionContext } from "@/contexts/SessionContext";
 import useActiveSession from "@/hooks/useSession";
 import ShowModal from "@/app/components/ui/ShowModal";
+import { useAuth } from "@/contexts/AuthContext";
 
 type ActionButtonProps = {
   onPress: () => void;
@@ -74,6 +75,7 @@ const ActionButton = forwardRef(
 );
 
 const Table = () => {
+  const { user } = useAuth();
   const { session, loading, error, refetch } = useActiveSession();
   const { reloadSessions } = useSessionContext(); // Fetch reloadSessions from SessionContext
 
@@ -117,17 +119,24 @@ const Table = () => {
       console.error("Failed to load players:", error);
       alert("Unable to load players. Please try again.");
     }
-  }, [session]);
-
-  useEffect(() => {
-    if (session) loadPlayers();
-  }, [session, loadPlayers]);
+  }, [session?.$id]);
 
   useFocusEffect(
     useCallback(() => {
-      if (session) loadPlayers();
-    }, [session, loadPlayers]),
+      if (user) {
+        const loadData = async () => {
+          await Promise.all([reloadSessions(), refetch()]);
+        };
+        loadData();
+      }
+    }, [user]),
   );
+
+  useEffect(() => {
+    if (session) {
+      loadPlayers();
+    }
+  }, [session?.$id, loadPlayers]);
 
   const handleCreatePlayer = async (data: {
     name: string;
@@ -154,11 +163,12 @@ const Table = () => {
   };
 
   const handleCreateSession = async () => {
-    if (!session) {
+    if (!session && user) {
       try {
         await createSession({
           date: new Date(),
           isActive: true,
+          userId: user.uid,
         });
         closeModal("createSession");
       } catch (error) {

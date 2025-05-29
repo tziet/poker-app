@@ -6,7 +6,7 @@ const useFetch = <T>(fetchFunction: () => Promise<T>, autoFetch = true) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -19,25 +19,22 @@ const useFetch = <T>(fetchFunction: () => Promise<T>, autoFetch = true) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [fetchFunction]);
 
-  const reset = () => {
-    setData(null);
-    setLoading(false);
-    setError(null);
-  };
-
+  // Initial fetch
   useEffect(() => {
     if (autoFetch) fetchData();
-  }, []);
+  }, [autoFetch, fetchData]);
 
+  // Fetch on focus
   useFocusEffect(
     useCallback(() => {
       if (autoFetch) fetchData();
-    }, []),
+      return () => {}; // Cleanup function
+    }, [autoFetch, fetchData]),
   );
 
-  return { data, loading, error, refetch: fetchData, reset };
+  return { data, loading, error, refetch: fetchData };
 };
 
 export default useFetch;
