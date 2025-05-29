@@ -1,5 +1,4 @@
-interface Player {
-  $id: string;
+interface NewPlayer {
   name: string;
   chips: number;
   endgameChips: number;
@@ -7,16 +6,16 @@ interface Player {
   sessionId: string;
 }
 
-interface NewPlayer extends Player {
-  $id?: string;
+interface Player extends NewPlayer {
+  $id: string;
 }
 
-interface Session {
-  $id: string;
+interface NewSession {
   date: firebase.firestore.Timestamp;
   isActive: boolean;
+  userId: string;
 }
 
-interface NewSession extends Session {
-  $id?: string;
+interface Session extends NewSession {
+  $id: string;
 }

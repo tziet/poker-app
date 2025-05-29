@@ -2,8 +2,12 @@ import React from "react";
 import { Tabs } from "expo-router";
 import { icons } from "@/constants/icons";
 import TabIcon from "@/app/components/ui/TabIcon";
+import { useProtectedRoute } from "@/app/_utils/auth";
 
 const _Layout = () => {
+  const protection = useProtectedRoute();
+  if (protection) return protection;
+
   return (
     <Tabs
       screenOptions={{

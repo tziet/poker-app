@@ -200,7 +200,6 @@ const Table = () => {
                 onClose={() => closeModal("createPlayer")}
                 onSubmit={handleCreatePlayer}
                 selectedSeat={selectedPosition}
-                key={`createPlayerForm`}
               />
             ),
           },
@@ -212,7 +211,6 @@ const Table = () => {
                 onSubmit={handleCreateSession}
                 submitText="Create Session"
                 text="Are you sure you want to create a new session?"
-                key={`createSessionForm`}
               />
             ),
           },
@@ -224,7 +222,6 @@ const Table = () => {
                 onSubmit={handleArchiveSession}
                 submitText="Archive Session"
                 text="Are you sure you want to archive this session?"
-                key={`archiveSessionForm`}
               />
             ),
           },

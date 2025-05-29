@@ -97,7 +97,6 @@ const PlayerDetails = () => {
                 onSubmit={handleDeletePlayer}
                 submitText="Delete Player"
                 text="Are you sure you want to delete this player?"
-                key={`deletePlayerForm`}
               />
             ),
           },
@@ -108,7 +107,6 @@ const PlayerDetails = () => {
                 id={playerId}
                 onClose={() => closeModal("editPlayer")}
                 onSubmit={handleEditPlayer}
-                key={`editPlayerForm`}
               />
             ),
           },

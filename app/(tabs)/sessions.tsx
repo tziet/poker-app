@@ -104,7 +104,6 @@ const Sessions = () => {
                 onSubmit={() => handleSessionChange(selectedSession!)}
                 submitText="Switch Session"
                 text="Are you sure you want to switch to this session?"
-                key={"activateSessionForm"}
               />
             ),
           },

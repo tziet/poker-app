@@ -27,3 +27,34 @@ export default function RootLayout() {
     </SessionProvider>
   );
 }
+
+// import { Stack } from "expo-router";
+// import { AuthProvider } from "@/contexts/AuthContext";
+// import { SessionProvider } from "@/contexts/SessionContext";
+// import { StatusBar } from "expo-status-bar";
+//
+// export default function RootLayout() {
+//   return (
+//     <AuthProvider>
+//       <SessionProvider>
+//         <StatusBar style="light" />
+//         <Stack>
+//           <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+//           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+//           <Stack.Screen
+//             name="player/[id]"
+//             options={{
+//               headerShown: false,
+//             }}
+//           />
+//           <Stack.Screen
+//             name="screens/moneySummary"
+//             options={{
+//               headerShown: false,
+//             }}
+//           />
+//         </Stack>
+//       </SessionProvider>
+//     </AuthProvider>
+//   );
+// }

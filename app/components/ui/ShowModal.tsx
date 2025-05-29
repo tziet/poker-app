@@ -11,8 +11,13 @@ type ShowModalProps = {
 const ShowModal = ({ modals }: ShowModalProps) => {
   return (
     <>
-      {modals.map((modal) => (
-        <Modal visible={modal.visible} transparent animationType="slide">
+      {modals.map((modal, index) => (
+        <Modal
+          key={index}
+          visible={modal.visible}
+          transparent
+          animationType="slide"
+        >
           <View className="flex-1 justify-center items-center bg-black/60">
             {modal.form}
           </View>
