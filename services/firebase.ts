@@ -13,17 +13,16 @@ import {
 import { initializeApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
 
-const firebaseConfig = {
+export const firebaseConfig = {
   apiKey: process.env.EXPO_PUBLIC_FIREBASE_API_KEY,
   authDomain: process.env.EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN,
   projectId: process.env.EXPO_PUBLIC_FIREBASE_PROJECT_ID,
   storageBucket: process.env.EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.EXPO_PUBLIC_FIREBASE_APP_ID,
 };
 
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-
-export { db };
+export const db = getFirestore(initializeApp(firebaseConfig));
 
 export const createPlayer = async (data: NewPlayer) => {
   const docRef = await addDoc(collection(db, "players"), data);
@@ -87,38 +86,50 @@ export const createSession = async (data: NewSession): Promise<Session> => {
   };
 };
 
-export const getActiveSession = async (): Promise<Session | null> => {
-  const querySnapshot = await getDocs(collection(db, "sessions"));
-  const activeSessionDoc = querySnapshot.docs.find(
-    (doc) => doc.data().isActive == true,
+export const getActiveSession = async (
+  userId: string | null,
+): Promise<Session | null> => {
+  if (!userId) return null;
+
+  const q = query(
+    collection(db, "sessions"),
+    where("userId", "==", userId),
+    where("isActive", "==", true),
   );
 
+  const querySnapshot = await getDocs(q);
+  const activeSessionDoc = querySnapshot.docs[0];
+
   if (!activeSessionDoc) {
-    return null; // No active session found
+    return null;
   }
 
-  const activeSessionData = activeSessionDoc.data();
   return {
-    $id: activeSessionDoc.id, // Include the document ID
-    ...activeSessionData,
+    $id: activeSessionDoc.id,
+    ...activeSessionDoc.data(),
   } as Session;
 };
 
-export const getAllSessions = async (): Promise<(Session | null)[]> => {
-  const playersRef = collection(db, "sessions");
-  const q = query(playersRef, orderBy("date", "asc")); // Order players by seat number
+export const getAllSessions = async (
+  userId: string | null,
+): Promise<(Session | null)[]> => {
+  if (!userId) return [];
+
+  const q = query(
+    collection(db, "sessions"),
+    where("userId", "==", userId),
+    orderBy("date", "desc"),
+  );
 
   const snapshot = await getDocs(q);
 
-  const data: (Session | null)[] = [];
-  snapshot.docs.map((doc, index) => {
-    data[index] = {
-      $id: doc.id,
-      ...doc.data(),
-    } as Session;
-  });
-
-  return data;
+  return snapshot.docs.map(
+    (doc) =>
+      ({
+        $id: doc.id,
+        ...doc.data(),
+      }) as Session,
+  );
 };
 
 export const updateSession = async (

@@ -5,18 +5,20 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/pokerLogo.png",
-    "scheme": "myapp",
+    "scheme": "com.yonatantseitlin.pockertracker",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.yonatantseitlin.pockertracker"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/pokerLogo.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.yonatantseitlin.pockertracker"
+      "package": "com.yonatantseitlin.pockertracker",
+      "googleServicesFile": "./android/app/google-services.json"
     },
     "web": {
       "bundler": "metro",

@@ -1,29 +1,38 @@
-import React, { useState } from "react";
+import React from "react";
 import { View, Text, TouchableOpacity } from "react-native";
 
 type ConfirmFormProps = {
-  setModalVisible: React.Dispatch<React.SetStateAction<boolean>>;
-  onConfirm: () => void;
+  onClose: () => void;
+  onSubmit: () => void;
+  submitText?: string;
+  text?: string;
 };
 
-const ConfirmForm: React.FC<ConfirmFormProps> = (data: ConfirmFormProps) => {
+const ConfirmForm: React.FC<ConfirmFormProps> = ({
+  onClose,
+  onSubmit,
+  submitText,
+  text,
+}: ConfirmFormProps) => {
   return (
     <View className="bg-white p-6 rounded-2xl w-4/5">
-      <Text className="text-gray-700">Are you sure?</Text>
+      <Text className="text-gray-700">{text ? text : "Are you sure?"}</Text>
 
       <View className="flex-row justify-between mt-4">
         <TouchableOpacity
-          onPress={() => data.setModalVisible(false)}
+          onPress={onClose}
           className="px-4 py-2 rounded-lg bg-gray-200"
         >
           <Text className="text-gray-700">Cancel</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
-          onPress={() => data.onConfirm()}
+          onPress={onSubmit}
           className="px-4 py-2 rounded-lg bg-blue-500"
         >
-          <Text className="text-white font-bold">Confirm</Text>
+          <Text className="text-white font-bold">
+            {submitText ? submitText : "Confirm"}
+          </Text>
         </TouchableOpacity>
       </View>
     </View>

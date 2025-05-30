@@ -1,145 +1,47 @@
-import React, { useState, useEffect, useCallback } from "react";
-import { View, Text, Image, ScrollView, TextInput } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
+import React from "react";
 import {
-  getActiveSession,
-  getAllPlayers,
-  getTableMoneySum,
-} from "@/app/services/firebase";
-import { icons } from "@/app/constants/icons";
-import GoBackButton from "@/app/components/GoBackButton";
+  View,
+  Text,
+  Image,
+  ScrollView,
+  TextInput,
+  TouchableOpacity,
+  ActivityIndicator,
+} from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import { icons } from "@/constants/icons";
+import GoBackButton from "@/app/components/ui/GoBackButton";
+import { useMoneySummary } from "@/hooks/useMoneySummary";
 
 const MoneySummary = () => {
-  // Explicitly define the state shape
-  type MoneySummaryState = {
-    session: Session | null;
-    moneySum: number;
-    players: (Player | null)[];
-    currentChips: { [id: string]: number };
-    debts: { lender: string; borrower: string; amount: number }[];
-  };
+  const {
+    moneySum,
+    players,
+    debts,
+    loading,
+    error,
+    handleEndgameChipsChange,
+    handleSaveChips,
+  } = useMoneySummary();
 
-  const [state, setState] = useState<MoneySummaryState>({
-    session: null,
-    moneySum: 0,
-    players: Array<Player | null>(8).fill(null),
-    currentChips: {},
-    debts: [],
-  });
+  if (loading) {
+    return (
+      <View className="flex-1 bg-primary justify-center items-center">
+        <ActivityIndicator size="large" color="#0000ff" />
+      </View>
+    );
+  }
 
-  const loadSession = useCallback(async () => {
-    try {
-      const session = await getActiveSession();
-      if (session) {
-        console.log("Active session loaded:", session);
-        fetchTableData(session);
-        // Update the state with the session
-        setState((prev) => ({
-          ...prev,
-          session,
-        }));
-      } else {
-        console.warn("No active session found.");
-      }
-    } catch (err) {
-      console.error("Error loading session:", err);
-    }
-  }, []);
-
-  const fetchTableData = async (session: Session) => {
-    try {
-      const [moneySum, players] = await Promise.all([
-        getTableMoneySum(session),
-        getAllPlayers(session.$id) as Promise<Player[]>,
-      ]);
-
-      console.log("Money and players loaded:", { moneySum, players });
-
-      const initialChips = players.reduce(
-        (acc, player) => {
-          if (player) acc[player.$id] = player.chips;
-          return acc;
-        },
-        {} as { [id: string]: number },
-      );
-
-      // Update state with fetched players and table data
-      setState((prev) => ({
-        ...prev, // Ensures other fields like `debts` and `session` are preserved
-        moneySum: moneySum, // Explicitly assigning the value
-        players: players as (Player | null)[], // Type assertion ensures compatibility
-        currentChips: { ...initialChips }, // Properly typed object for currentChips
-      }));
-    } catch (err) {
-      console.error("Error fetching table data:", err);
-    }
-  };
-
-  const calculateTransactions = useCallback(() => {
-    const { players, currentChips } = state;
-    const playersWithAmounts = players
-      .filter((player): player is Player => player !== null)
-      .map((player) => ({
-        playerName: player.name,
-        netChange: currentChips[player.$id] - player.chips,
-        id: player.$id,
-      }));
-
-    const lenders = playersWithAmounts.filter((p) => p.netChange > 0);
-    const borrowers = playersWithAmounts.filter((p) => p.netChange < 0);
-
-    const transactions: { lender: string; borrower: string; amount: number }[] =
-      [];
-    let i = 0,
-      j = 0;
-
-    while (i < lenders.length && j < borrowers.length) {
-      const amount = Math.min(
-        lenders[i].netChange,
-        Math.abs(borrowers[j].netChange),
-      );
-
-      transactions.push({
-        lender: lenders[i].playerName,
-        borrower: borrowers[j].playerName,
-        amount,
-      });
-
-      lenders[i].netChange -= amount;
-      borrowers[j].netChange += amount;
-
-      if (lenders[i].netChange === 0) i++;
-      if (borrowers[j].netChange === 0) j++;
-    }
-
-    return transactions;
-  }, [state.players, state.currentChips]);
-
-  useEffect(() => {
-    const debts = calculateTransactions();
-    // Update state with calculated debts
-    setState((prev) => ({
-      ...prev,
-      debts,
-    }));
-  }, [state.currentChips, state.players, calculateTransactions]);
-
-  useEffect(() => {
-    loadSession();
-  }, [loadSession]);
-
-  const handleCurrentChipsChange = (id: string, value: string) => {
-    const parsedValue = parseInt(value, 10) || 0;
-    setState((prev) => ({
-      ...prev,
-      currentChips: {
-        ...prev.currentChips,
-        [id]: parsedValue,
-      },
-    }));
-  };
-
-  const { moneySum, players, debts } = state;
+  if (error) {
+    return (
+      <View className="flex-1 bg-primary justify-center items-center px-4">
+        <Text className="text-red-500 text-center">
+          {error.message || "An error occurred while loading the data"}
+        </Text>
+        <GoBackButton />
+      </View>
+    );
+  }
 
   return (
     <View className="flex-1 bg-primary">
@@ -161,7 +63,7 @@ const MoneySummary = () => {
 
         <View className="flex-row items-center justify-between mt-3 bg-secondary p-4 rounded">
           <Text className="text-white text-lg font-bold">Players</Text>
-          <Text className="text-white text-lg font-bold">Current Chips</Text>
+          <Text className="text-white text-lg font-bold">Updated Chips</Text>
         </View>
 
         {players.map(
@@ -174,7 +76,7 @@ const MoneySummary = () => {
                 <View>
                   <Text className="text-white text-base">{player.name}</Text>
                   <Text className="text-white text-sm">
-                    Starting Chips: {player.chips}
+                    Buy-In Chips: {player.chips}
                   </Text>
                 </View>
 
@@ -182,10 +84,11 @@ const MoneySummary = () => {
                   <TextInput
                     className="rounded px-2 text-white bg-dark-200"
                     keyboardType="numeric"
-                    value={state.currentChips[player.$id]?.toString() || ""}
+                    value={player.endgameChips?.toString() || ""}
                     onChangeText={(value) =>
-                      handleCurrentChipsChange(player.$id, value)
+                      handleEndgameChipsChange(player.$id, value)
                     }
+                    maxLength={6}
                   />
                 </View>
               </View>
@@ -222,9 +125,15 @@ const MoneySummary = () => {
             </Text>
           )}
         </View>
-      </ScrollView>
 
-      <GoBackButton />
+        <TouchableOpacity
+          className="bg-blue-500 rounded-lg p-4 mt-6 mx-4"
+          onPress={handleSaveChips}
+        >
+          <Text className="text-white text-center text-lg font-bold">Save</Text>
+        </TouchableOpacity>
+        <GoBackButton />
+      </ScrollView>
     </View>
   );
 };

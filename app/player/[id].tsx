@@ -1,33 +1,38 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
   TouchableOpacity,
-  Modal,
   Image,
   ActivityIndicator,
 } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
-import GoBackButton from "@/app/components/GoBackButton";
-import ConfirmForm from "@/app/components/modals/ConfirmForm";
-import EditAttributeForm from "@/app/components/modals/EditAttributeForm";
+import GoBackButton from "@/app/components/ui/GoBackButton";
+import ConfirmForm from "@/app/components/forms/ConfirmForm";
+import EditAttributeForm from "@/app/components/forms/EditAttributeForm";
 import {
   deletePlayer,
   getPlayerDetails,
   updatePlayer,
-} from "@/app/services/firebase";
-import { icons } from "@/app/constants/icons";
+} from "@/services/firebase";
+import { icons } from "@/constants/icons";
+import ShowModal from "@/app/components/ui/ShowModal";
+import { authStyles } from "@/styles/auth.styles";
 
 const PlayerDetails = () => {
   const { id } = useLocalSearchParams();
   const playerId = typeof id === "string" ? id : id?.[0] || "";
-
   const [player, setPlayer] = useState<Player | null>(null);
   const [loading, setLoading] = useState(true);
-  const [deleteModalVisible, setDeleteModalVisible] = useState(false);
-  const [editModalVisible, setEditModalVisible] = useState(false);
 
-  /** Fetch Player Details */
+  const [modalState, setModalState] = useState({
+    editPlayer: false,
+    deletePlayer: false,
+  });
+  const openModal = (type: keyof typeof modalState) =>
+    setModalState({ ...modalState, [type]: true });
+  const closeModal = (type: keyof typeof modalState) =>
+    setModalState({ ...modalState, [type]: false });
 
   useEffect(() => {
     const fetchPlayerDetails = async () => {
@@ -44,7 +49,6 @@ const PlayerDetails = () => {
     fetchPlayerDetails();
   }, [playerId]);
 
-  /** Handle Delete */
   const handleDeletePlayer = async () => {
     try {
       if (player) {
@@ -56,20 +60,19 @@ const PlayerDetails = () => {
       console.error("Error deleting player:", error);
       alert("Failed to delete player.");
     } finally {
-      setDeleteModalVisible(false);
+      closeModal("deletePlayer");
     }
   };
 
-  /** Handle Edit */
   const handleEditPlayer = async (
     updatedName: string,
-    updatedChips: number,
+    endgameChips: number,
   ) => {
     try {
       const updatedPlayer = {
         ...player,
         name: updatedName,
-        chips: updatedChips,
+        chips: endgameChips,
       } as Player;
 
       await updatePlayer(playerId, updatedPlayer);
@@ -79,8 +82,38 @@ const PlayerDetails = () => {
       console.error("Error updating player:", error);
       alert("Failed to update player.");
     } finally {
-      setEditModalVisible(false);
+      closeModal("editPlayer");
     }
+  };
+
+  const renderModals = () => {
+    return (
+      <ShowModal
+        modals={[
+          {
+            visible: modalState.deletePlayer,
+            form: (
+              <ConfirmForm
+                onClose={() => closeModal("deletePlayer")}
+                onSubmit={handleDeletePlayer}
+                submitText="Delete Player"
+                text="Are you sure you want to delete this player?"
+              />
+            ),
+          },
+          {
+            visible: modalState.editPlayer,
+            form: (
+              <EditAttributeForm
+                id={playerId}
+                onClose={() => closeModal("editPlayer")}
+                onSubmit={handleEditPlayer}
+              />
+            ),
+          },
+        ]}
+      />
+    );
   };
 
   if (loading) {
@@ -111,63 +144,41 @@ const PlayerDetails = () => {
         <PlayerInfo
           label="Name"
           value={player?.name}
-          onEdit={() => setEditModalVisible(true)}
+          onEdit={() => openModal("editPlayer")}
         />
         <PlayerInfo
-          label="Chips"
+          label="Buy-In Chips"
           value={player?.chips?.toString()}
-          onEdit={() => setEditModalVisible(true)}
+          onEdit={() => openModal("editPlayer")}
         />
-        <PlayerInfo
-          label="Seat"
-          value={player?.seat != null ? (player.seat + 1).toString() : "N/A"}
-        />
+        {/*<PlayerInfo*/}
+        {/*  label="Seat"*/}
+        {/*  value={player?.seat != null ? (player.seat + 1).toString() : "N/A"}*/}
+        {/*/>*/}
       </View>
 
       {/* Buttons */}
       <View className="mt-8 px-5">
         <ActionButton
-          onPress={() => setEditModalVisible(true)}
+          onPress={() => openModal("editPlayer")}
           color="orange-500"
           icon={icons.edit}
           text="Edit Player"
         />
         <ActionButton
-          onPress={() => setDeleteModalVisible(true)}
+          onPress={() => openModal("deletePlayer")}
           color="red-900"
           icon={icons.removeUser}
           text="Delete Player"
         />
       </View>
 
-      {/* Modals */}
-      <CustomModal
-        visible={deleteModalVisible}
-        onClose={() => setDeleteModalVisible(false)}
-      >
-        <ConfirmForm
-          setModalVisible={setDeleteModalVisible}
-          onConfirm={handleDeletePlayer}
-        />
-      </CustomModal>
-
-      <CustomModal
-        visible={editModalVisible}
-        onClose={() => setEditModalVisible(false)}
-      >
-        <EditAttributeForm
-          id={playerId}
-          onClose={() => setEditModalVisible(false)}
-          onSubmit={handleEditPlayer}
-        />
-      </CustomModal>
-
+      {renderModals()}
       <GoBackButton />
     </View>
   );
 };
 
-/** Player Info Component */
 const PlayerInfo = ({
   label,
   value,
@@ -177,21 +188,17 @@ const PlayerInfo = ({
   value?: string;
   onEdit?: () => void;
 }) => (
-  <View className="bg-gray-800 rounded-lg p-4 mb-4 shadow-lg">
-    <Text className="text-white font-semibold text-lg mb-1">{label}</Text>
+  <View style={authStyles.buttonContainer}>
+    <Text style={authStyles.buttonText}>{label}</Text>
     <Text className="text-white text-base">{value || "N/A"}</Text>
     {onEdit && (
-      <TouchableOpacity
-        className="bg-blue-500 px-3 py-2 rounded-md mt-2 self-start"
-        onPress={onEdit}
-      >
-        <Text className="text-white text-sm">Edit</Text>
+      <TouchableOpacity style={authStyles.button} onPress={onEdit}>
+        <Text style={authStyles.buttonText}>Edit</Text>
       </TouchableOpacity>
     )}
   </View>
 );
 
-/** Reusable Action Button */
 const ActionButton = ({
   onPress,
   color,
@@ -210,23 +217,6 @@ const ActionButton = ({
     <Image source={icon} className="w-5 h-5 mr-1" tintColor="#fff" />
     <Text className="text-white font-semibold text-lg">{text}</Text>
   </TouchableOpacity>
-);
-
-/** Reusable Modal Wrapper */
-const CustomModal = ({
-  visible,
-  onClose,
-  children,
-}: {
-  visible: boolean;
-  onClose: () => void;
-  children: React.ReactNode;
-}) => (
-  <Modal visible={visible} animationType="slide" transparent>
-    <View className="flex-1 justify-center items-center bg-black/70">
-      <View className="bg-white p-6 rounded-xl w-4/5">{children}</View>
-    </View>
-  </Modal>
 );
 
 export default PlayerDetails;

@@ -1,25 +1,21 @@
-interface Player {
-  $id: string;
-  name: string;
-  chips: number;
-  seat: number | null;
-  sessionId: string;
-}
-
 interface NewPlayer {
   name: string;
   chips: number;
+  endgameChips: number;
   seat: number | null;
   sessionId: string;
 }
 
-interface Session {
+interface Player extends NewPlayer {
   $id: string;
-  date: firebase.firestore.Timestamp;
-  isActive: boolean;
 }
 
 interface NewSession {
-  date: Date;
+  date: firebase.firestore.Timestamp;
   isActive: boolean;
+  userId: string;
+}
+
+interface Session extends NewSession {
+  $id: string;
 }

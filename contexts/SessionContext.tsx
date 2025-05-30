@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
-import { getAllSessions } from "@/app/services/firebase";
+import { getAllSessions } from "@/services/firebase";
+import { useAuth } from "@/contexts/AuthContext";
 
 const SessionContext = createContext<{
   sessions: Session[];
@@ -11,11 +12,12 @@ export const SessionProvider = ({
 }: {
   children: React.ReactNode;
 }) => {
+  const { user } = useAuth();
   const [sessions, setSessions] = useState<Session[]>([]);
 
   const loadSessions = async () => {
     try {
-      const response = await getAllSessions();
+      const response = await getAllSessions(user?.uid || null);
       if (response)
         setSessions(
           response.filter((session): session is Session => session !== null),
@@ -26,9 +28,15 @@ export const SessionProvider = ({
     }
   };
 
+  // Add user dependency to useEffect
   useEffect(() => {
-    loadSessions();
-  }, []);
+    if (user) {
+      // Only load sessions if there's a user
+      loadSessions();
+    } else {
+      setSessions([]); // Clear sessions when there's no user
+    }
+  }, [user]); // Add user as a dependency
 
   return (
     <SessionContext.Provider value={{ sessions, reloadSessions: loadSessions }}>
