@@ -19,7 +19,6 @@ const EditAttributeForm = ({ id, onClose, onSubmit }: EditFormProps) => {
       try {
         const details = await getPlayerDetails(id);
         if (details) {
-          console.log("Player details loaded:", details);
           setName(details.name);
           setChips(details.chips.toString());
         } else {

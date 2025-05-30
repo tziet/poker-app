@@ -62,7 +62,6 @@ export const useMoneySummary = () => {
     try {
       const session = await getActiveSession(user.uid);
       if (session) {
-        console.log("Active session loaded:", session);
         setState((prev) => ({
           ...prev,
           session,

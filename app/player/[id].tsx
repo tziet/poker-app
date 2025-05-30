@@ -17,6 +17,7 @@ import {
 } from "@/services/firebase";
 import { icons } from "@/constants/icons";
 import ShowModal from "@/app/components/ui/ShowModal";
+import { authStyles } from "@/styles/auth.styles";
 
 const PlayerDetails = () => {
   const { id } = useLocalSearchParams();
@@ -150,10 +151,10 @@ const PlayerDetails = () => {
           value={player?.chips?.toString()}
           onEdit={() => openModal("editPlayer")}
         />
-        <PlayerInfo
-          label="Seat"
-          value={player?.seat != null ? (player.seat + 1).toString() : "N/A"}
-        />
+        {/*<PlayerInfo*/}
+        {/*  label="Seat"*/}
+        {/*  value={player?.seat != null ? (player.seat + 1).toString() : "N/A"}*/}
+        {/*/>*/}
       </View>
 
       {/* Buttons */}
@@ -187,15 +188,12 @@ const PlayerInfo = ({
   value?: string;
   onEdit?: () => void;
 }) => (
-  <View className="bg-gray-800 rounded-lg p-4 mb-4 shadow-lg">
-    <Text className="text-white font-semibold text-lg mb-1">{label}</Text>
+  <View style={authStyles.buttonContainer}>
+    <Text style={authStyles.buttonText}>{label}</Text>
     <Text className="text-white text-base">{value || "N/A"}</Text>
     {onEdit && (
-      <TouchableOpacity
-        className="bg-blue-500 px-3 py-2 rounded-md mt-2 self-start"
-        onPress={onEdit}
-      >
-        <Text className="text-white text-sm">Edit</Text>
+      <TouchableOpacity style={authStyles.button} onPress={onEdit}>
+        <Text style={authStyles.buttonText}>Edit</Text>
       </TouchableOpacity>
     )}
   </View>
