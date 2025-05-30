@@ -36,7 +36,7 @@ const MoneySummary = () => {
   });
 
   const { user } = useAuth();
-  // const { session, loading, error, refetch } = useActiveSession();
+  const { session, loading, error, refetch } = useActiveSession();
 
   const loadSession = useCallback(async () => {
     if (!user) return;

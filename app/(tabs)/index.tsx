@@ -133,10 +133,18 @@ const Table = () => {
   );
 
   useEffect(() => {
-    if (session) {
+    if (session?.$id) {
       loadPlayers();
     }
-  }, [session?.$id, loadPlayers]);
+  }, [session?.$id]);
+
+  useFocusEffect(
+    useCallback(() => {
+      if (session?.$id) {
+        loadPlayers();
+      }
+    }, [session?.$id, loadPlayers]),
+  );
 
   const handleCreatePlayer = async (data: {
     name: string;
@@ -171,6 +179,7 @@ const Table = () => {
           userId: user.uid,
         });
         closeModal("createSession");
+        setPlayers([]);
       } catch (error) {
         console.error("Error creating session:", error);
         alert("Could not create session. Try again.");
@@ -187,6 +196,7 @@ const Table = () => {
       try {
         await updateSession(session.$id, { ...session, isActive: false });
         closeModal("archiveSession");
+        setPlayers([]);
         alert("Session successfully archived.");
       } catch (error) {
         console.error("Error archiving session:", error);
