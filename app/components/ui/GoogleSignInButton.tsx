@@ -1,6 +1,7 @@
 import React from "react";
-import { TouchableOpacity, Text, StyleSheet } from "react-native";
+import { TouchableOpacity, Text } from "react-native";
 import { AntDesign } from "@expo/vector-icons";
+import { googleButtonStyles } from "@/styles/googleButton.styles";
 
 interface GoogleSignInButtonProps {
   onPress: () => void;
@@ -13,33 +14,19 @@ const GoogleSignInButton: React.FC<GoogleSignInButtonProps> = ({
 }) => {
   return (
     <TouchableOpacity
-      style={styles.button}
+      style={googleButtonStyles.button}
       onPress={onPress}
       disabled={disabled}
     >
-      <AntDesign name="google" size={24} color="white" style={styles.icon} />
-      <Text style={styles.text}>Continue with Google</Text>
+      <AntDesign
+        name="google"
+        size={24}
+        color="white"
+        style={googleButtonStyles.icon}
+      />
+      <Text style={googleButtonStyles.text}>Continue with Google</Text>
     </TouchableOpacity>
   );
 };
-
-const styles = StyleSheet.create({
-  button: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#4285F4",
-    padding: 16,
-    borderRadius: 8,
-    justifyContent: "center",
-  },
-  icon: {
-    marginRight: 10,
-  },
-  text: {
-    color: "white",
-    fontSize: 16,
-    fontWeight: "600",
-  },
-});
 
 export default GoogleSignInButton;

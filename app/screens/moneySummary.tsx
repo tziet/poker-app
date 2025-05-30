@@ -18,15 +18,16 @@ import {
 import { icons } from "@/constants/icons";
 import GoBackButton from "@/app/components/ui/GoBackButton";
 import { useAuth } from "@/contexts/AuthContext";
+import useActiveSession from "@/hooks/useSession";
+
+type MoneySummaryState = {
+  session: Session | null;
+  moneySum: number;
+  players: (Player | null)[];
+  debts: { lender: string; borrower: string; amount: number }[];
+};
 
 const MoneySummary = () => {
-  type MoneySummaryState = {
-    session: Session | null;
-    moneySum: number;
-    players: (Player | null)[];
-    debts: { lender: string; borrower: string; amount: number }[];
-  };
-
   const [state, setState] = useState<MoneySummaryState>({
     session: null,
     moneySum: 0,
@@ -35,6 +36,7 @@ const MoneySummary = () => {
   });
 
   const { user } = useAuth();
+  // const { session, loading, error, refetch } = useActiveSession();
 
   const loadSession = useCallback(async () => {
     if (!user) return;

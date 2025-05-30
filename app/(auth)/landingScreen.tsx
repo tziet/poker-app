@@ -1,12 +1,12 @@
 import React, { useState } from "react";
-import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
+import { View, Text, TouchableOpacity, Alert } from "react-native";
 import { useRouter } from "expo-router";
 import { Image } from "react-native";
 import { icons } from "@/constants/icons";
-import { signInWithGoogle } from "@/services/auth";
 import GoogleSignInButton from "@/app/components/ui/GoogleSignInButton";
 import * as WebBrowser from "expo-web-browser";
 import { useGoogleAuth } from "@/hooks/useGoogleAuth";
+import { authStyles } from "@/styles/auth.styles";
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -34,29 +34,29 @@ const LandingScreen = () => {
   }, [error]);
 
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
+    <View style={authStyles.container}>
+      <View style={authStyles.header}>
         <Image
           source={icons.logo}
-          style={styles.logo}
+          style={authStyles.logo}
           resizeMode="contain"
           tintColor="white"
         />
       </View>
 
-      <View style={styles.buttonContainer}>
+      <View style={authStyles.buttonContainer}>
         <TouchableOpacity
-          style={styles.button}
+          style={authStyles.button}
           onPress={() => router.push("/login")}
         >
-          <Text style={styles.buttonText}>Login</Text>
+          <Text style={authStyles.buttonText}>Login</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
-          style={[styles.button, styles.registerButton]}
+          style={[authStyles.button, authStyles.registerButton]}
           onPress={() => router.push("/register")}
         >
-          <Text style={styles.buttonText}>Register</Text>
+          <Text style={authStyles.buttonText}>Register</Text>
         </TouchableOpacity>
 
         <GoogleSignInButton onPress={handleGoogleSignIn} disabled={isLoading} />
@@ -64,40 +64,5 @@ const LandingScreen = () => {
     </View>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#0F0D23",
-    padding: 20,
-  },
-  header: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  logo: {
-    width: 120,
-    height: 100,
-  },
-  buttonContainer: {
-    gap: 16,
-    marginBottom: 40,
-  },
-  button: {
-    backgroundColor: "#1E1B38",
-    padding: 16,
-    borderRadius: 8,
-    alignItems: "center",
-  },
-  registerButton: {
-    backgroundColor: "#2D2A47",
-  },
-  buttonText: {
-    color: "white",
-    fontSize: 16,
-    fontWeight: "600",
-  },
-});
 
 export default LandingScreen;

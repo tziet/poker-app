@@ -1,14 +1,8 @@
 import React, { useState } from "react";
-import {
-  View,
-  TextInput,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  Alert,
-} from "react-native";
+import { View, TextInput, Text, TouchableOpacity, Alert } from "react-native";
 import { useRouter, Link } from "expo-router";
 import { signUpWithEmailPassword } from "@/services/auth";
+import { authStyles } from "@/styles/auth.styles";
 
 const RegisterScreen = () => {
   const [email, setEmail] = useState("");
@@ -44,8 +38,8 @@ const RegisterScreen = () => {
   };
 
   return (
-    <View style={styles.container}>
-      {error && <Text style={styles.error}>{error}</Text>}
+    <View style={authStyles.container}>
+      {error && <Text style={authStyles.error}>{error}</Text>}
 
       <TextInput
         placeholder="Email"
@@ -53,7 +47,7 @@ const RegisterScreen = () => {
         onChangeText={setEmail}
         keyboardType="email-address"
         autoCapitalize="none"
-        style={styles.input}
+        style={authStyles.input}
         placeholderTextColor="#666"
         selectionColor="white"
       />
@@ -63,7 +57,7 @@ const RegisterScreen = () => {
         value={password}
         onChangeText={setPassword}
         secureTextEntry
-        style={styles.input}
+        style={authStyles.input}
         placeholderTextColor="#666"
         selectionColor="white"
       />
@@ -73,84 +67,38 @@ const RegisterScreen = () => {
         value={confirmPassword}
         onChangeText={setConfirmPassword}
         secureTextEntry
-        style={styles.input}
+        style={authStyles.input}
         placeholderTextColor="#666"
         selectionColor="white"
       />
 
-      <View style={styles.buttonContainer}>
+      <View style={authStyles.buttonContainer}>
         <TouchableOpacity
           disabled={isLoading}
-          style={styles.button}
+          style={authStyles.button}
           onPress={handleRegister}
         >
-          <Text style={styles.buttonText}>
+          <Text style={authStyles.buttonText}>
             {isLoading ? "Registering..." : "Register"}
           </Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.button} onPress={() => router.back()}>
-          <Text style={styles.buttonText}>Back</Text>
+        <TouchableOpacity
+          style={authStyles.button}
+          onPress={() => router.back()}
+        >
+          <Text style={authStyles.buttonText}>Back</Text>
         </TouchableOpacity>
       </View>
 
-      <View style={styles.footer}>
-        <Text style={styles.text}>Already have an account? </Text>
-        <Link href="/(auth)/login" style={styles.link}>
+      <View style={authStyles.footer}>
+        <Text style={authStyles.text}>Already have an account? </Text>
+        <Link href="/(auth)/login" style={authStyles.link}>
           Login
         </Link>
       </View>
     </View>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 20,
-    justifyContent: "center",
-    backgroundColor: "#0F0D23",
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: "#2D2A47",
-    padding: 10,
-    marginBottom: 10,
-    borderRadius: 5,
-    color: "white",
-    backgroundColor: "#1E1B38",
-  },
-  error: {
-    color: "red",
-    marginBottom: 10,
-  },
-  footer: {
-    flexDirection: "row",
-    justifyContent: "center",
-    marginTop: 20,
-  },
-  text: {
-    color: "white",
-  },
-  link: {
-    color: "#4E8EF7",
-    marginLeft: 5,
-  },
-  buttonContainer: {
-    gap: 16,
-    marginBottom: 40,
-  },
-  button: {
-    backgroundColor: "#1E1B38",
-    padding: 16,
-    borderRadius: 8,
-    alignItems: "center",
-  },
-  buttonText: {
-    color: "white",
-    fontSize: 16,
-    fontWeight: "600",
-  },
-});
 
 export default RegisterScreen;

@@ -1,14 +1,8 @@
 import React, { useState } from "react";
-import {
-  View,
-  TextInput,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  Alert,
-} from "react-native";
+import { View, TextInput, Text, TouchableOpacity, Alert } from "react-native";
 import { useRouter } from "expo-router";
 import { loginWithEmailPassword } from "@/services/auth";
+import { authStyles } from "@/styles/auth.styles";
 
 const LoginScreen = () => {
   const [email, setEmail] = useState("");
@@ -38,8 +32,8 @@ const LoginScreen = () => {
   };
 
   return (
-    <View style={styles.container}>
-      {error && <Text style={styles.error}>{error}</Text>}
+    <View style={authStyles.container}>
+      {error && <Text style={authStyles.error}>{error}</Text>}
 
       <TextInput
         placeholder="Email"
@@ -47,7 +41,7 @@ const LoginScreen = () => {
         onChangeText={setEmail}
         keyboardType="email-address"
         autoCapitalize="none"
-        style={styles.input}
+        style={authStyles.input}
         placeholderTextColor="#666"
         selectionColor="white"
       />
@@ -57,65 +51,31 @@ const LoginScreen = () => {
         value={password}
         onChangeText={setPassword}
         secureTextEntry
-        style={styles.input}
+        style={authStyles.input}
         placeholderTextColor="#666"
         selectionColor="white"
       />
 
-      <View style={styles.buttonContainer}>
+      <View style={authStyles.buttonContainer}>
         <TouchableOpacity
           disabled={isLoading}
-          style={styles.button}
+          style={authStyles.button}
           onPress={handleLogin}
         >
-          <Text style={styles.buttonText}>
+          <Text style={authStyles.buttonText}>
             {isLoading ? "Logging in..." : "Login"}
           </Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.button} onPress={() => router.back()}>
-          <Text style={styles.buttonText}>Back</Text>
+        <TouchableOpacity
+          style={authStyles.button}
+          onPress={() => router.back()}
+        >
+          <Text style={authStyles.buttonText}>Back</Text>
         </TouchableOpacity>
       </View>
     </View>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 20,
-    justifyContent: "center",
-    backgroundColor: "#0F0D23",
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: "#2D2A47",
-    padding: 10,
-    marginBottom: 10,
-    borderRadius: 5,
-    color: "white",
-    backgroundColor: "#1E1B38",
-  },
-  error: {
-    color: "red",
-    marginBottom: 10,
-  },
-  buttonContainer: {
-    gap: 16,
-    marginBottom: 40,
-  },
-  button: {
-    backgroundColor: "#1E1B38",
-    padding: 16,
-    borderRadius: 8,
-    alignItems: "center",
-  },
-  buttonText: {
-    color: "white",
-    fontSize: 16,
-    fontWeight: "600",
-  },
-});
 
 export default LoginScreen;
