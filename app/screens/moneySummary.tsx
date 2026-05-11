@@ -43,6 +43,12 @@ const MoneySummary = () => {
     );
   }
 
+  const endgameChipsSum = players
+    .filter((p): p is Player => p !== null)
+    .reduce((sum, p) => sum + (p.endgameChips || 0), 0);
+
+  const chipsMatchMoney = endgameChipsSum === moneySum;
+
   return (
     <View className="flex-1 bg-primary">
       <ScrollView
@@ -59,6 +65,13 @@ const MoneySummary = () => {
         />
         <Text className="text-white text-center text-xl font-bold">
           Money at the table: {moneySum}
+        </Text>
+        <Text
+          className={`text-center text-base font-semibold mt-1 ${chipsMatchMoney ? "text-green-400" : "text-red-400"}`}
+        >
+          {chipsMatchMoney
+            ? "Total chips match ✓"
+            : `Total chips: ${endgameChipsSum} (diff: ${endgameChipsSum - moneySum})`}
         </Text>
 
         <View className="flex-row items-center justify-between mt-3 bg-secondary p-4 rounded">
