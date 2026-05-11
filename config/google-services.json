@@ -1,0 +1,54 @@
+{
+  "project_info": {
+    "project_number": "46648411194",
+    "project_id": "poker-tracker-530da",
+    "storage_bucket": "poker-tracker-530da.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:46648411194:android:b03e907c57a9bcbf766103",
+        "android_client_info": {
+          "package_name": "com.yonatantseitlin.pockertracker"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "46648411194-e3ohsq6d16ucck2eced2srot58ja0s9u.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.yonatantseitlin.pockertracker",
+            "certificate_hash": "4487e9272cc49cee66ddecf987727fb85c4c92b4"
+          }
+        },
+        {
+          "client_id": "46648411194-u61cupaga1rti7fq2bfmsli3e0hjvh34.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBYJly67cRmR972TblBFIJ9DNgGlae8cYc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "46648411194-jngpfko87lm9edc9f9scig1n6thg1h9j.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "46648411194-e01krl1j36r8m2frp9v1v9aqs603va2u.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.yonatantseitlin.pockertracker"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
