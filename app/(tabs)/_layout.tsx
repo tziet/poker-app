@@ -5,8 +5,8 @@ import TabIcon from "@/app/components/ui/TabIcon";
 import { useProtectedRoute } from "@/hooks/auth";
 
 const _Layout = () => {
-  const protection = useProtectedRoute();
-  if (protection) return protection;
+  const isBlocked = useProtectedRoute();
+  if (isBlocked) return null;
 
   return (
     <Tabs

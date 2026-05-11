@@ -96,8 +96,8 @@ const PlayerDetails = () => {
               <ConfirmForm
                 onClose={() => closeModal("deletePlayer")}
                 onSubmit={handleDeletePlayer}
-                submitText="Delete Player"
-                text="Are you sure you want to delete this player?"
+                submitText='Delete Player'
+                text='Are you sure you want to delete this player?'
               />
             ),
           },
@@ -118,36 +118,36 @@ const PlayerDetails = () => {
 
   if (loading) {
     return (
-      <View className="flex-1 justify-center items-center bg-primary">
-        <ActivityIndicator size="large" color="#FFF" />
+      <View className='flex-1 justify-center items-center bg-primary'>
+        <ActivityIndicator size='large' color='#FFF' />
       </View>
     );
   }
 
   return (
-    <View className="flex-1 bg-primary">
+    <View className='flex-1 bg-primary'>
       {/* Header */}
-      <View className="items-center mt-10">
+      <View className='items-center mt-10'>
         <Image
           source={icons.user}
-          className="w-12 h-10 mt-5"
-          resizeMode="contain"
-          tintColor="#fff"
+          className='w-12 h-10 mt-5'
+          resizeMode='contain'
+          tintColor='#fff'
         />
-        <Text className="text-white text-2xl font-bold mt-2">
+        <Text className='text-white text-2xl font-bold mt-2'>
           {player?.name || "Player Details"}
         </Text>
       </View>
 
       {/* Player Info */}
-      <View className="px-5 py-4 mt-10">
+      <View className='px-5 py-4 mt-10'>
         <PlayerInfo
-          label="Name"
+          label='Name'
           value={player?.name}
           onEdit={() => openModal("editPlayer")}
         />
         <PlayerInfo
-          label="Buy-In Chips"
+          label='Buy-In Chips'
           value={player?.chips?.toString()}
           onEdit={() => openModal("editPlayer")}
         />
@@ -158,18 +158,18 @@ const PlayerDetails = () => {
       </View>
 
       {/* Buttons */}
-      <View className="mt-8 px-5">
+      <View className='mt-8 px-5'>
         <ActionButton
           onPress={() => openModal("editPlayer")}
-          color="orange-500"
+          color='orange-500'
           icon={icons.edit}
-          text="Edit Player"
+          text='Edit Player'
         />
         <ActionButton
           onPress={() => openModal("deletePlayer")}
-          color="red-900"
+          color='red-900'
           icon={icons.removeUser}
-          text="Delete Player"
+          text='Delete Player'
         />
       </View>
 
@@ -190,7 +190,7 @@ const PlayerInfo = ({
 }) => (
   <View style={authStyles.buttonContainer}>
     <Text style={authStyles.buttonText}>{label}</Text>
-    <Text className="text-white text-base">{value || "N/A"}</Text>
+    <Text className='text-white text-base'>{value || "N/A"}</Text>
     {onEdit && (
       <TouchableOpacity style={authStyles.button} onPress={onEdit}>
         <Text style={authStyles.buttonText}>Edit</Text>
@@ -214,8 +214,8 @@ const ActionButton = ({
     className={`bg-${color} rounded-lg py-3 mb-4 flex-row items-center justify-center`}
     onPress={onPress}
   >
-    <Image source={icon} className="w-5 h-5 mr-1" tintColor="#fff" />
-    <Text className="text-white font-semibold text-lg">{text}</Text>
+    <Image source={icon} className='w-5 h-5 mr-1' tintColor='#fff' />
+    <Text className='text-white font-semibold text-lg'>{text}</Text>
   </TouchableOpacity>
 );
 

@@ -1,13 +1,17 @@
-import { Redirect } from "expo-router";
+import { useRouter } from "expo-router";
 import { useAuth } from "@/contexts/AuthContext";
-import React from "react";
+import { useEffect } from "react";
 
-export function useProtectedRoute(): React.ReactElement | null {
+export function useProtectedRoute(): boolean {
   const { user, loading } = useAuth();
+  const router = useRouter();
 
-  if (!loading && !user) {
-    return React.createElement(Redirect, { href: "/(auth)/login" });
-  }
+  useEffect(() => {
+    if (loading) return;
+    if (!user) {
+      router.replace("/(auth)/login");
+    }
+  }, [user, loading]);
 
-  return null;
+  return loading || !user;
 }
