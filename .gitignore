@@ -44,5 +44,3 @@ app-example
 **/hs_err_pid*.log
 **/replay_pid*.log
 
-#EAS
-.easworkflows
