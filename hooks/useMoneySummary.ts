@@ -137,7 +137,7 @@ export const useMoneySummary = () => {
   };
 
   const handleSaveChips = async () => {
-    const { players, session } = state;
+    const { players } = state;
     const playersToUpdate = players.filter(
       (player) => player && player.endgameChips !== player.chips,
     ) as Player[];
@@ -156,7 +156,6 @@ export const useMoneySummary = () => {
       }
 
       Alert.alert("Success", "Updated chips saved successfully.");
-      if (session) fetchTableData(session);
     } catch (error) {
       console.error("Error saving updated chips:", error);
       Alert.alert(
