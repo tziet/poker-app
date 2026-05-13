@@ -1,4 +1,4 @@
-package com.yonatantseitlin.pockertracker
+package com.yonatantseitlin.pokertracker
 
 import android.app.Application
 import android.content.res.Configuration
