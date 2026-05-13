@@ -1,8 +1,9 @@
 {
   "expo": {
+    "sdkVersion": "54.0.0",
     "name": "Poker Tracker",
     "slug": "pocker-tracker",
-    "version": "1.1.0",
+    "version": "1.2.0",
     "orientation": "portrait",
     "icon": "./assets/images/pokerLogo.png",
     "scheme": "com.yonatantseitlin.pockertracker",
@@ -21,7 +22,7 @@
         "backgroundColor": "#ffffff"
       },
       "package": "com.yonatantseitlin.pockertracker",
-      "googleServicesFile": "./config/google-services.json"
+      "googleServicesFile": "./android/app/google-services.json"
     },
     "web": {
       "bundler": "metro",
@@ -38,7 +39,9 @@
           "resizeMode": "contain",
           "backgroundColor": "#ffffff"
         }
-      ]
+      ],
+      "expo-font",
+      "expo-web-browser"
     ],
     "experiments": {
       "typedRoutes": true
