@@ -2,16 +2,16 @@
   "expo": {
     "sdkVersion": "54.0.0",
     "name": "Poker Tracker",
-    "slug": "pocker-tracker",
+    "slug": "poker-tracker",
     "version": "1.2.0",
     "orientation": "portrait",
     "icon": "./assets/images/pokerLogo.png",
-    "scheme": "com.yonatantseitlin.pockertracker",
+    "scheme": "com.yonatantseitlin.pokertracker",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.yonatantseitlin.pockertracker",
+      "bundleIdentifier": "com.yonatantseitlin.pokertracker",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
       }
@@ -21,7 +21,7 @@
         "foregroundImage": "./assets/images/pokerLogo.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.yonatantseitlin.pockertracker",
+      "package": "com.yonatantseitlin.pokertracker",
       "googleServicesFile": "./android/app/google-services.json"
     },
     "web": {

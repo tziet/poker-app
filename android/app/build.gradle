@@ -86,9 +86,9 @@ android {
     buildToolsVersion rootProject.ext.buildToolsVersion
     compileSdk rootProject.ext.compileSdkVersion
 
-    namespace 'com.yonatantseitlin.pockertracker'
+    namespace 'com.yonatantseitlin.pokertracker'
     defaultConfig {
-        applicationId 'com.yonatantseitlin.pockertracker'
+        applicationId 'com.yonatantseitlin.pokertracker'
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1

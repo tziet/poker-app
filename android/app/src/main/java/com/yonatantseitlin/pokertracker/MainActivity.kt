@@ -1,4 +1,4 @@
-package com.yonatantseitlin.pockertracker
+package com.yonatantseitlin.pokertracker
 import expo.modules.splashscreen.SplashScreenManager
 
 import android.os.Build
