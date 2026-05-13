@@ -48,6 +48,42 @@
           ]
         }
       }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:46648411194:android:eb974409a0cb5bf0766103",
+        "android_client_info": {
+          "package_name": "com.yonatantseitlin.pokertracker"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "46648411194-u61cupaga1rti7fq2bfmsli3e0hjvh34.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBYJly67cRmR972TblBFIJ9DNgGlae8cYc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "46648411194-jngpfko87lm9edc9f9scig1n6thg1h9j.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "46648411194-e01krl1j36r8m2frp9v1v9aqs603va2u.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.yonatantseitlin.pockertracker"
+              }
+            }
+          ]
+        }
+      }
     }
   ],
   "configuration_version": "1"
