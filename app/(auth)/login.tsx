@@ -69,11 +69,15 @@ const LoginScreen = () => {
 
         <TouchableOpacity
           style={authStyles.button}
-          onPress={() => router.back()}
+          onPress={() => router.replace("/(auth)/landingScreen")}
         >
           <Text style={authStyles.buttonText}>Back</Text>
         </TouchableOpacity>
       </View>
+
+      <TouchableOpacity onPress={() => router.replace("/(auth)/register")}>
+        <Text style={authStyles.linkText}>Don't have an account? Sign up</Text>
+      </TouchableOpacity>
     </View>
   );
 };
