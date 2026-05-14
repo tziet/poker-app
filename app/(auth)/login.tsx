@@ -36,24 +36,24 @@ const LoginScreen = () => {
       {error && <Text style={authStyles.error}>{error}</Text>}
 
       <TextInput
-        placeholder="Email"
+        placeholder='Email'
         value={email}
         onChangeText={setEmail}
-        keyboardType="email-address"
-        autoCapitalize="none"
+        keyboardType='email-address'
+        autoCapitalize='none'
         style={authStyles.input}
-        placeholderTextColor="#666"
-        selectionColor="white"
+        placeholderTextColor='#666'
+        selectionColor='white'
       />
 
       <TextInput
-        placeholder="Password"
+        placeholder='Password'
         value={password}
         onChangeText={setPassword}
         secureTextEntry
         style={authStyles.input}
-        placeholderTextColor="#666"
-        selectionColor="white"
+        placeholderTextColor='#666'
+        selectionColor='white'
       />
 
       <View style={authStyles.buttonContainer}>
