@@ -59,4 +59,10 @@ export const authStyles = StyleSheet.create({
     width: 120,
     height: 100,
   },
+  linkText: {
+    color: "#4E8EF7",
+    textAlign: "center",
+    marginTop: 16,
+    fontSize: 14,
+  },
 });
