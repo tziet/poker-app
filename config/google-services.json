@@ -14,6 +14,14 @@
       },
       "oauth_client": [
         {
+          "client_id": "46648411194-e5c225jbp30u1fs2e9hlm7o8e0ncjkea.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.yonatantseitlin.pokertracker",
+            "certificate_hash": "4f92fee72775efbf7bac8061f75e874a1c27dc78"
+          }
+        },
+        {
           "client_id": "46648411194-u61cupaga1rti7fq2bfmsli3e0hjvh34.apps.googleusercontent.com",
           "client_type": 3
         }
@@ -34,7 +42,7 @@
               "client_id": "46648411194-e01krl1j36r8m2frp9v1v9aqs603va2u.apps.googleusercontent.com",
               "client_type": 2,
               "ios_info": {
-                "bundle_id": "com.yonatantseitlin.pokertracker"
+                "bundle_id": "com.yonatantseitlin.pockertracker"
               }
             }
           ]
