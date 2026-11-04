@@ -10,9 +10,9 @@ import {
   signInWithPhoneNumber,
   PhoneAuthProvider,
   signInWithCredential,
+  getReactNativePersistence,
 } from "firebase/auth";
 import { firebaseConfig } from "@/services/firebase";
-import { getReactNativePersistence } from "@firebase/auth";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { doc, getFirestore, setDoc } from "firebase/firestore";
 

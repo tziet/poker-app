@@ -166,7 +166,7 @@ const Sessions = () => {
                     No Sessions Found
                   </Text>
                 </View>
-              ) : null
+              ) : undefined
             }
           />
         </View>
