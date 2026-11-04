@@ -8,7 +8,7 @@ import {
   ViewStyle,
   ActivityIndicator,
 } from "react-native";
-import { useFocusEffect } from "@react-navigation/native";
+import { useFocusEffect } from "expo-router";
 import { Link } from "expo-router";
 import { images } from "@/constants/images";
 import { icons } from "@/constants/icons";
@@ -50,25 +50,25 @@ const ActionButton = forwardRef(
       ref={ref}
       onPress={onPress}
       style={[style, { justifyContent: "center", alignItems: "center" }]}
-      className="absolute"
+      className='absolute'
     >
       {topText && (
         <Text
-          className="text-white text-sm mb-1"
+          className='text-white text-sm mb-1'
           numberOfLines={1}
-          ellipsizeMode="tail"
+          ellipsizeMode='tail'
         >
           {topText}
         </Text>
       )}
       <Image
         source={icon}
-        className="w-6 h-6"
-        resizeMode="contain"
+        className='w-6 h-6'
+        resizeMode='contain'
         tintColor={noTintColor ? undefined : "white"}
       />
       {bottomText && (
-        <Text className="text-white mt-2 text-sm">{bottomText}</Text>
+        <Text className='text-white mt-2 text-sm'>{bottomText}</Text>
       )}
     </TouchableOpacity>
   ),
@@ -229,8 +229,8 @@ const Table = () => {
               <ConfirmForm
                 onClose={() => closeModal("createSession")}
                 onSubmit={handleCreateSession}
-                submitText="Create Session"
-                text="Are you sure you want to create a new session?"
+                submitText='Create Session'
+                text='Are you sure you want to create a new session?'
               />
             ),
           },
@@ -240,8 +240,8 @@ const Table = () => {
               <ConfirmForm
                 onClose={() => closeModal("archiveSession")}
                 onSubmit={handleArchiveSession}
-                submitText="Archive Session"
-                text="Are you sure you want to archive this session?"
+                submitText='Archive Session'
+                text='Are you sure you want to archive this session?'
               />
             ),
           },
@@ -251,25 +251,25 @@ const Table = () => {
   };
 
   return (
-    <View className="flex-1 bg-primary relative">
+    <View className='flex-1 bg-primary relative'>
       <Image
         source={icons.logo}
-        className="w-12 h-10 absolute mt-20 mx-auto self-center"
-        resizeMode="contain"
-        tintColor="white"
+        className='w-12 h-10 absolute mt-20 mx-auto self-center'
+        resizeMode='contain'
+        tintColor='white'
       />
       {loading ? (
         <ActivityIndicator
-          size="large"
-          color="#0000ff"
-          className="flex-1 self-center justify-center"
+          size='large'
+          color='#0000ff'
+          className='flex-1 self-center justify-center'
         />
       ) : error ? (
-        <View className="flex-1 justify-center items-center">
+        <View className='flex-1 justify-center items-center'>
           <Text>Error loading session: {error.message}</Text>
         </View>
       ) : session?.isActive ? (
-        <View className="flex-1 justify-center items-center">
+        <View className='flex-1 justify-center items-center'>
           <Link key={`moneyButton`} href={"/screens/moneySummary"} asChild>
             <ActionButton
               style={{ top: 100, left: 40 }}
@@ -285,9 +285,9 @@ const Table = () => {
           />
           <Image
             source={images.pTable}
-            className="w-64 h-64 z-0 rotate-90"
-            resizeMode="contain"
-            tintColor="white"
+            className='w-64 h-64 z-0 rotate-90'
+            resizeMode='contain'
+            tintColor='white'
           />
           {/* Player Slots */}
           {positions.map((style, i) =>
@@ -319,12 +319,12 @@ const Table = () => {
           )}
         </View>
       ) : (
-        <View className="flex-1 justify-center items-center">
+        <View className='flex-1 justify-center items-center'>
           <ActionButton
             onPress={() => openModal("createSession")}
             style={{ alignItems: "center" }}
             icon={icons.plus}
-            bottomText="New Session"
+            bottomText='New Session'
           />
         </View>
       )}
