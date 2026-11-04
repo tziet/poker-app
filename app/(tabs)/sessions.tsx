@@ -14,7 +14,7 @@ import ConfirmForm from "@/app/components/forms/ConfirmForm";
 import React, { useCallback, useState } from "react";
 import ShowModal from "@/app/components/ui/ShowModal";
 import { useAuth } from "@/contexts/AuthContext";
-import { useFocusEffect } from "@react-navigation/native";
+import { useFocusEffect } from "expo-router";
 
 const Sessions = () => {
   const { user } = useAuth();
