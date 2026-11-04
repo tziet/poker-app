@@ -10,17 +10,21 @@ export const useGoogleAuth = () => {
     androidClientId: process.env.EXPO_PUBLIC_ANDROID_CLIENT_ID,
     iosClientId: process.env.EXPO_PUBLIC_IOS_CLIENT_ID,
     webClientId: process.env.EXPO_PUBLIC_FIREBASE_WEB_CLIENT_ID,
-    responseType: "id_token",
-    scopes: ["profile", "email"],
+    scopes: ["openid", "profile", "email"],
   });
 
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (response?.type === "success") {
-      const { id_token } = response.params;
+      const idToken =
+        response.authentication?.idToken ?? response.params?.id_token;
+      if (!idToken) {
+        setError("Google did not return an ID token");
+        return;
+      }
 
-      const credential = GoogleAuthProvider.credential(id_token);
+      const credential = GoogleAuthProvider.credential(idToken);
 
       signInWithCredential(auth, credential)
         .then((result) => {
