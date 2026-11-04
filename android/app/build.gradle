@@ -130,8 +130,11 @@ android {
     androidResources {
         ignoreAssetsPattern '!.svn:!.git:!.ds_store:!*.scc:!CVS:!thumbs.db:!picasa.ini:!*~'
     }
-    externalNativeBuild {
-        cmake { version "3.31.6" }
+    // Pin CMake only on Windows (260-char path limit workaround); EAS/Linux images don't ship 3.31.6.
+    if (System.getProperty('os.name').toLowerCase().contains('windows')) {
+        externalNativeBuild {
+            cmake { version "3.31.6" }
+        }
     }
 }
 
