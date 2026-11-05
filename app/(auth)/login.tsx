@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { View, TextInput, Text, TouchableOpacity, Alert } from "react-native";
 import { useRouter } from "expo-router";
-import { loginWithEmailPassword } from "@/services/auth";
+import { loginWithEmailPassword, sendPasswordReset } from "@/services/auth";
 import { authStyles } from "@/styles/auth.styles";
 
 const LoginScreen = () => {
@@ -23,6 +23,24 @@ const LoginScreen = () => {
     try {
       await loginWithEmailPassword(email, password);
       // The AuthContext will automatically redirect to main app
+    } catch (err: any) {
+      setError(err.message);
+      Alert.alert("Error", err.message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleForgotPassword = async () => {
+    if (isLoading) return;
+    setIsLoading(true);
+    try {
+      await sendPasswordReset(email);
+      setError("");
+      Alert.alert(
+        "Check your email",
+        "If an account exists for this email, a password reset link was sent.",
+      );
     } catch (err: any) {
       setError(err.message);
       Alert.alert("Error", err.message);
@@ -74,6 +92,10 @@ const LoginScreen = () => {
           <Text style={authStyles.buttonText}>Back</Text>
         </TouchableOpacity>
       </View>
+
+      <TouchableOpacity onPress={handleForgotPassword}>
+        <Text style={authStyles.linkText}>Forgot password?</Text>
+      </TouchableOpacity>
 
       <TouchableOpacity onPress={() => router.replace("/(auth)/register")}>
         <Text style={authStyles.linkText}>Don't have an account? Sign up</Text>
