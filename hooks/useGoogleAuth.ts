@@ -10,7 +10,12 @@ WebBrowser.maybeCompleteAuthSession();
 
 export const useGoogleAuth = () => {
   const [request, response, promptAsync] = Google.useAuthRequest({
-    androidClientId: process.env.EXPO_PUBLIC_ANDROID_CLIENT_ID,
+    // Dev-client builds are signed with the debug keystore (different SHA-1),
+    // so they need their own Android OAuth client.
+    androidClientId: __DEV__
+      ? (process.env.EXPO_PUBLIC_ANDROID_CLIENT_ID_DEV ??
+        process.env.EXPO_PUBLIC_ANDROID_CLIENT_ID)
+      : process.env.EXPO_PUBLIC_ANDROID_CLIENT_ID,
     iosClientId: process.env.EXPO_PUBLIC_IOS_CLIENT_ID,
     webClientId: process.env.EXPO_PUBLIC_FIREBASE_WEB_CLIENT_ID,
     scopes: ["openid", "profile", "email"],
