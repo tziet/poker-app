@@ -9,6 +9,7 @@ import {
   query,
   orderBy,
   where,
+  writeBatch,
 } from "firebase/firestore";
 import { initializeApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
@@ -134,8 +135,33 @@ export const getAllSessions = async (
 
 export const updateSession = async (
   id: string,
-  session: Session,
+  changes: Partial<NewSession>,
 ): Promise<void> => {
   const docRef = doc(db, "sessions", id); // "sessions" is the Firestore collection name
-  await updateDoc(docRef, { ...session }); // Update the document with the new session data
+  await updateDoc(docRef, { ...changes }); // Only write the fields that changed
+};
+
+export const getSession = async (id: string): Promise<Session | null> => {
+  const docSnap = await getDoc(doc(db, "sessions", id));
+  if (!docSnap.exists()) return null;
+  return { $id: docSnap.id, ...docSnap.data() } as Session;
+};
+
+/**
+ * Atomically save session settings (seat count, chip rate), delete the
+ * removed players and move the remaining ones to their new seats.
+ */
+export const updateSessionSettings = async (
+  sessionId: string,
+  settings: Pick<NewSession, "seatCount" | "chipRate" | "entryUnit">,
+  seatChanges: { playerId: string; seat: number }[],
+  removedPlayerIds: string[],
+): Promise<void> => {
+  const batch = writeBatch(db);
+  batch.update(doc(db, "sessions", sessionId), { ...settings });
+  removedPlayerIds.forEach((id) => batch.delete(doc(db, "players", id)));
+  seatChanges.forEach(({ playerId, seat }) =>
+    batch.update(doc(db, "players", playerId), { seat }),
+  );
+  await batch.commit();
 };

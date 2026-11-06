@@ -13,8 +13,10 @@ import EditAttributeForm from "@/app/components/forms/EditAttributeForm";
 import {
   deletePlayer,
   getPlayerDetails,
+  getSession,
   updatePlayer,
 } from "@/services/firebase";
+import { formatChips, resolveEntryUnit } from "@/utils/money";
 import { icons } from "@/constants/icons";
 import ShowModal from "@/app/components/ui/ShowModal";
 import { authStyles } from "@/styles/auth.styles";
@@ -23,14 +25,21 @@ const PlayerDetails = () => {
   const { id } = useLocalSearchParams();
   const playerId = typeof id === "string" ? id : id?.[0] || "";
   const [player, setPlayer] = useState<Player | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
+  const chipRate = session?.chipRate;
+  const entryUnit = resolveEntryUnit(chipRate, session?.entryUnit);
   const [loading, setLoading] = useState(true);
 
   const [modalState, setModalState] = useState({
     editPlayer: false,
     deletePlayer: false,
   });
-  const openModal = (type: keyof typeof modalState) =>
+  // Bumped on every open so the edit form starts from the saved values.
+  const [formKey, setFormKey] = useState(0);
+  const openModal = (type: keyof typeof modalState) => {
+    setFormKey((k) => k + 1);
     setModalState({ ...modalState, [type]: true });
+  };
   const closeModal = (type: keyof typeof modalState) =>
     setModalState({ ...modalState, [type]: false });
 
@@ -39,6 +48,9 @@ const PlayerDetails = () => {
       try {
         const details = await getPlayerDetails(playerId);
         setPlayer(details ?? null);
+        if (details?.sessionId) {
+          setSession(await getSession(details.sessionId));
+        }
       } catch (error) {
         console.error("Failed to fetch player details:", error);
         alert("Error loading player details.");
@@ -105,7 +117,10 @@ const PlayerDetails = () => {
             visible: modalState.editPlayer,
             form: (
               <EditAttributeForm
+                key={`edit-player-${formKey}`}
                 id={playerId}
+                chipRate={chipRate}
+                entryUnit={entryUnit}
                 onClose={() => closeModal("editPlayer")}
                 onSubmit={handleEditPlayer}
               />
@@ -148,7 +163,11 @@ const PlayerDetails = () => {
         />
         <PlayerInfo
           label='Buy-In Chips'
-          value={player?.chips?.toString()}
+          value={
+            player?.chips != null
+              ? formatChips(player.chips, chipRate)
+              : undefined
+          }
           onEdit={() => openModal("editPlayer")}
         />
         {/*<PlayerInfo*/}

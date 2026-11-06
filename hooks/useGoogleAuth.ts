@@ -1,26 +1,38 @@
 import * as Google from "expo-auth-session/providers/google";
+import * as WebBrowser from "expo-web-browser";
 import { useEffect, useState } from "react";
 import { GoogleAuthProvider, signInWithCredential } from "firebase/auth";
 import { auth } from "@/services/auth";
 import { doc, setDoc } from "firebase/firestore";
 import { db } from "@/services/firebase";
 
+WebBrowser.maybeCompleteAuthSession();
+
 export const useGoogleAuth = () => {
   const [request, response, promptAsync] = Google.useAuthRequest({
-    androidClientId: process.env.EXPO_PUBLIC_ANDROID_CLIENT_ID,
+    // Dev-client builds are signed with the debug keystore (different SHA-1),
+    // so they need their own Android OAuth client.
+    androidClientId: __DEV__
+      ? (process.env.EXPO_PUBLIC_ANDROID_CLIENT_ID_DEV ??
+        process.env.EXPO_PUBLIC_ANDROID_CLIENT_ID)
+      : process.env.EXPO_PUBLIC_ANDROID_CLIENT_ID,
     iosClientId: process.env.EXPO_PUBLIC_IOS_CLIENT_ID,
     webClientId: process.env.EXPO_PUBLIC_FIREBASE_WEB_CLIENT_ID,
-    responseType: "id_token",
-    scopes: ["profile", "email"],
+    scopes: ["openid", "profile", "email"],
   });
 
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (response?.type === "success") {
-      const { id_token } = response.params;
+      const idToken =
+        response.authentication?.idToken ?? response.params?.id_token;
+      if (!idToken) {
+        setError("Google did not return an ID token");
+        return;
+      }
 
-      const credential = GoogleAuthProvider.credential(id_token);
+      const credential = GoogleAuthProvider.credential(idToken);
 
       signInWithCredential(auth, credential)
         .then((result) => {

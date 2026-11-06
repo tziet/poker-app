@@ -10,9 +10,13 @@ import {
   signInWithPhoneNumber,
   PhoneAuthProvider,
   signInWithCredential,
+  getReactNativePersistence,
+  fetchSignInMethodsForEmail,
+  sendEmailVerification,
+  sendPasswordResetEmail,
 } from "firebase/auth";
+import { getFunctions, httpsCallable } from "firebase/functions";
 import { firebaseConfig } from "@/services/firebase";
-import { getReactNativePersistence } from "@firebase/auth";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { doc, getFirestore, setDoc } from "firebase/firestore";
 
@@ -123,6 +127,19 @@ export const loginWithPhone = async (verificationId: string, code: string) => {
   }
 };
 
+export const GOOGLE_ACCOUNT_MESSAGE =
+  "This email is registered with Google. Please use 'Continue with Google' to sign in.";
+
+// Best effort: returns [] when Firebase email enumeration protection is on.
+const isGoogleOnlyEmail = async (email: string) => {
+  try {
+    const methods = await fetchSignInMethodsForEmail(auth, email.trim());
+    return methods.includes("google.com") && !methods.includes("password");
+  } catch {
+    return false;
+  }
+};
+
 export const signUpWithEmailPassword = async (
   email: string,
   password: string,
@@ -130,11 +147,24 @@ export const signUpWithEmailPassword = async (
   try {
     const userCredential = await createUserWithEmailAndPassword(
       auth,
-      email,
+      email.trim(),
       password,
     );
+    try {
+      await sendEmailVerification(userCredential.user);
+    } catch {
+      // Verification email is best effort; don't block sign up.
+    }
     return userCredential.user;
   } catch (error: any) {
+    if (error.code === "auth/email-already-in-use") {
+      if (await isGoogleOnlyEmail(email)) {
+        throw new Error(GOOGLE_ACCOUNT_MESSAGE);
+      }
+      throw new Error(
+        "An account with this email already exists. Try logging in, or use 'Continue with Google'.",
+      );
+    }
     throw new Error(error.message);
   }
 };
@@ -146,10 +176,53 @@ export const loginWithEmailPassword = async (
   try {
     const userCredential = await signInWithEmailAndPassword(
       auth,
-      email,
+      email.trim(),
       password,
     );
+    // Accounts that have Google linked must sign in with Google only.
+    // (Works even when email enumeration protection hides sign-in methods.)
+    if (
+      userCredential.user.providerData.some((p) => p.providerId === "google.com")
+    ) {
+      await signOut(auth);
+      throw new Error(GOOGLE_ACCOUNT_MESSAGE);
+    }
     return userCredential.user;
+  } catch (error: any) {
+    if (error.message === GOOGLE_ACCOUNT_MESSAGE) throw error;
+    const wrongCredentials = [
+      "auth/invalid-credential",
+      "auth/wrong-password",
+      "auth/user-not-found",
+    ];
+    if (wrongCredentials.includes(error.code)) {
+      if (await isGoogleOnlyEmail(email)) {
+        throw new Error(GOOGLE_ACCOUNT_MESSAGE);
+      }
+      throw new Error(
+        "Incorrect email or password. If you signed up with Google, use 'Continue with Google'.",
+      );
+    }
+    throw new Error(error.message);
+  }
+};
+
+export const sendPasswordReset = async (email: string) => {
+  if (!email.trim()) {
+    throw new Error("Please enter your email first");
+  }
+  try {
+    // Server-side check (works even with email enumeration protection on).
+    const check = httpsCallable(getFunctions(app), "checkPasswordResetAllowed");
+    await check({ email: email.trim() });
+  } catch (error: any) {
+    if (error.code === "functions/failed-precondition") {
+      throw new Error(GOOGLE_ACCOUNT_MESSAGE);
+    }
+    throw new Error("Could not verify this email right now. Please try again.");
+  }
+  try {
+    await sendPasswordResetEmail(auth, email.trim());
   } catch (error: any) {
     throw new Error(error.message);
   }

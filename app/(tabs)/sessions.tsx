@@ -14,7 +14,7 @@ import ConfirmForm from "@/app/components/forms/ConfirmForm";
 import React, { useCallback, useState } from "react";
 import ShowModal from "@/app/components/ui/ShowModal";
 import { useAuth } from "@/contexts/AuthContext";
-import { useFocusEffect } from "@react-navigation/native";
+import { useFocusEffect } from "expo-router";
 
 const Sessions = () => {
   const { user } = useAuth();
@@ -48,16 +48,10 @@ const Sessions = () => {
     if (activeSession?.$id !== pressedSession.$id) {
       try {
         if (activeSession) {
-          await updateSession(activeSession.$id, {
-            ...activeSession,
-            isActive: false,
-          });
+          await updateSession(activeSession.$id, { isActive: false });
         }
         if (!pressedSession.isActive) {
-          await updateSession(pressedSession.$id, {
-            ...pressedSession,
-            isActive: true,
-          });
+          await updateSession(pressedSession.$id, { isActive: true });
           closeModal("activateSession");
           alert("Session switched successfully.");
         }
@@ -166,7 +160,7 @@ const Sessions = () => {
                     No Sessions Found
                   </Text>
                 </View>
-              ) : null
+              ) : undefined
             }
           />
         </View>
