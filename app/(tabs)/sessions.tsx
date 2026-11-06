@@ -48,16 +48,10 @@ const Sessions = () => {
     if (activeSession?.$id !== pressedSession.$id) {
       try {
         if (activeSession) {
-          await updateSession(activeSession.$id, {
-            ...activeSession,
-            isActive: false,
-          });
+          await updateSession(activeSession.$id, { isActive: false });
         }
         if (!pressedSession.isActive) {
-          await updateSession(pressedSession.$id, {
-            ...pressedSession,
-            isActive: true,
-          });
+          await updateSession(pressedSession.$id, { isActive: true });
           closeModal("activateSession");
           alert("Session switched successfully.");
         }

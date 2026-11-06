@@ -4,9 +4,16 @@ import { View, TouchableOpacity, Text } from "react-native";
 type ButtonRowProps = {
   onCancel: () => void;
   onSubmit: () => void;
+  submitText?: string;
+  submitDisabled?: boolean;
 };
 
-const ButtonRow = ({ onCancel, onSubmit }: ButtonRowProps) => (
+const ButtonRow = ({
+  onCancel,
+  onSubmit,
+  submitText = "Confirm",
+  submitDisabled = false,
+}: ButtonRowProps) => (
   <View className="flex-row justify-between mt-4">
     <TouchableOpacity
       onPress={onCancel}
@@ -16,9 +23,10 @@ const ButtonRow = ({ onCancel, onSubmit }: ButtonRowProps) => (
     </TouchableOpacity>
     <TouchableOpacity
       onPress={onSubmit}
-      className="px-4 py-2 bg-blue-500 rounded-lg"
+      disabled={submitDisabled}
+      className={`px-4 py-2 rounded-lg ${submitDisabled ? "bg-blue-300" : "bg-blue-500"}`}
     >
-      <Text className="text-white font-bold">Confirm</Text>
+      <Text className="text-white font-bold">{submitText}</Text>
     </TouchableOpacity>
   </View>
 );
