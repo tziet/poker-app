@@ -1,4 +1,10 @@
-import React, { useCallback, useState, useEffect, forwardRef } from "react";
+import React, {
+  useCallback,
+  useState,
+  useEffect,
+  useMemo,
+  forwardRef,
+} from "react";
 import {
   View,
   Image,
@@ -17,9 +23,18 @@ import {
   getAllPlayers,
   createSession,
   updateSession,
+  resizeSessionSeats,
 } from "@/services/firebase";
 import CreatePlayerForm from "@/app/components/forms/CreatePlayerForm";
 import ConfirmForm from "@/app/components/forms/ConfirmForm";
+import NewSessionForm from "@/app/components/forms/NewSessionForm";
+import EditSeatsForm from "@/app/components/forms/EditSeatsForm";
+import {
+  DEFAULT_SEATS,
+  getSeatOffsets,
+  normalizeSeatCount,
+  redistributeSeats,
+} from "@/utils/seatLayout";
 import { useSessionContext } from "@/contexts/SessionContext";
 import useActiveSession from "@/hooks/useSession";
 import ShowModal from "@/app/components/ui/ShowModal";
@@ -83,16 +98,34 @@ const Table = () => {
     createPlayer: false,
     createSession: false,
     archiveSession: false,
+    editSeats: false,
   });
-  const openModal = (type: keyof typeof modalState) =>
-    setModalState({ ...modalState, [type]: true });
+  // Bumped on every open so forms start fresh instead of keeping stale input.
+  const [formKey, setFormKey] = useState(0);
+  const openModal = (type: keyof typeof modalState) => {
+    setFormKey((k) => k + 1);
+    setModalState((prev) => ({ ...prev, [type]: true }));
+  };
   const closeModal = (type: keyof typeof modalState) =>
-    setModalState({ ...modalState, [type]: false });
+    setModalState((prev) => ({ ...prev, [type]: false }));
 
   const [players, setPlayers] = useState<(Player | null)[]>(
-    Array(8).fill(null),
+    Array(DEFAULT_SEATS).fill(null),
   );
   const [selectedPosition, setSelectedPosition] = useState<number | null>(null);
+
+  // Seat count saved locally after a resize. It is tied to the fetched session
+  // object, so it is ignored as soon as the session is refetched from Firestore.
+  const [seatCountOverride, setSeatCountOverride] = useState<{
+    session: Session;
+    count: number;
+  } | null>(null);
+  const seatCount = normalizeSeatCount(
+    seatCountOverride && seatCountOverride.session === session
+      ? seatCountOverride.count
+      : session?.seatCount,
+  );
+  const positions = useMemo(() => getSeatStyles(seatCount), [seatCount]);
 
   const loadPlayers = useCallback(async () => {
     if (!session?.$id) {
@@ -102,13 +135,13 @@ const Table = () => {
     try {
       const sessionPlayers = (await getAllPlayers(session.$id)) as Player[];
 
-      const updatedPlayers = Array(positions.length).fill(null);
+      const updatedPlayers = Array(seatCount).fill(null);
 
       sessionPlayers.forEach((player) => {
         if (
           player.seat !== null &&
           player.seat >= 0 &&
-          player.seat < positions.length
+          player.seat < seatCount
         ) {
           updatedPlayers[player.seat] = player;
         }
@@ -119,7 +152,7 @@ const Table = () => {
       console.error("Failed to load players:", error);
       alert("Unable to load players. Please try again.");
     }
-  }, [session?.$id]);
+  }, [session?.$id, seatCount]);
 
   useFocusEffect(
     useCallback(() => {
@@ -170,13 +203,14 @@ const Table = () => {
     }
   };
 
-  const handleCreateSession = async () => {
+  const handleCreateSession = async (newSeatCount: number) => {
     if (!session && user) {
       try {
         await createSession({
           date: new Date(),
           isActive: true,
           userId: user.uid,
+          seatCount: normalizeSeatCount(newSeatCount),
         });
         closeModal("createSession");
         setPlayers([]);
@@ -194,7 +228,7 @@ const Table = () => {
   const handleArchiveSession = async () => {
     if (session) {
       try {
-        await updateSession(session.$id, { ...session, isActive: false });
+        await updateSession(session.$id, { isActive: false });
         closeModal("archiveSession");
         setPlayers([]);
         alert("Session successfully archived.");
@@ -206,6 +240,56 @@ const Table = () => {
       refetch(); // Refresh session after archiving
     } else {
       alert("No current session to archive.");
+    }
+  };
+
+  const seatedPlayers = players.filter((p): p is Player => !!p);
+
+  const handleResizeSeats = async (
+    newSeatCount: number,
+    removedPlayerIds: string[],
+  ) => {
+    if (!session) return;
+    const newCount = normalizeSeatCount(newSeatCount);
+
+    // `players` is indexed by seat, so this is already in clockwise seat order.
+    const remaining = players
+      .map((player, seat) => ({ player, seat }))
+      .filter(
+        (entry): entry is { player: Player; seat: number } =>
+          !!entry.player && !removedPlayerIds.includes(entry.player.$id),
+      );
+    if (remaining.length > newCount) {
+      alert("Not enough seats for the remaining players.");
+      return;
+    }
+
+    const newSeats = redistributeSeats(
+      remaining.map((entry) => entry.seat),
+      seatCount,
+      newCount,
+    );
+
+    try {
+      await resizeSessionSeats(
+        session.$id,
+        newCount,
+        remaining
+          .map((entry, i) => ({ playerId: entry.player.$id, seat: newSeats[i] }))
+          .filter((change, i) => change.seat !== remaining[i].player.seat),
+        removedPlayerIds,
+      );
+
+      const updatedPlayers: (Player | null)[] = Array(newCount).fill(null);
+      remaining.forEach((entry, i) => {
+        updatedPlayers[newSeats[i]] = { ...entry.player, seat: newSeats[i] };
+      });
+      setPlayers(updatedPlayers);
+      setSeatCountOverride({ session, count: newCount });
+      closeModal("editSeats");
+    } catch (error) {
+      console.error("Error updating seats:", error);
+      alert("Failed to update seats. Please try again.");
     }
   };
 
@@ -226,11 +310,22 @@ const Table = () => {
           {
             visible: modalState.createSession,
             form: (
-              <ConfirmForm
+              <NewSessionForm
+                key={`new-session-${formKey}`}
                 onClose={() => closeModal("createSession")}
                 onSubmit={handleCreateSession}
-                submitText='Create Session'
-                text='Are you sure you want to create a new session?'
+              />
+            ),
+          },
+          {
+            visible: modalState.editSeats,
+            form: (
+              <EditSeatsForm
+                key={`edit-seats-${formKey}`}
+                currentCount={seatCount}
+                seatedPlayers={seatedPlayers}
+                onClose={() => closeModal("editSeats")}
+                onSubmit={handleResizeSeats}
               />
             ),
           },
@@ -282,6 +377,13 @@ const Table = () => {
             onPress={() => openModal("archiveSession")}
             style={{ top: 100, right: 40 }}
             icon={icons.sessions}
+          />
+          {/* Seat count editor, next to the archive button in the top bar */}
+          <ActionButton
+            onPress={() => openModal("editSeats")}
+            style={{ top: 100, right: 90 }}
+            icon={icons.edit}
+            bottomText={`${seatCount} seats`}
           />
           <Image
             source={images.pTable}
@@ -341,18 +443,15 @@ const centerY = 445;
 const radiusX = 130;
 const radiusY = 240;
 
-const positions: ViewStyle[] = Array.from({ length: 8 }).map((_, i) => {
-  const angle = (i * 360) / 8;
-  const rad = (angle * Math.PI) / 180;
-  return {
+/** Seats evenly spaced (by arc length) around the table, symmetric for any count. */
+const getSeatStyles = (count: number): ViewStyle[] =>
+  getSeatOffsets(count, radiusX, radiusY).map(({ x, y }) => ({
     position: "absolute",
     justifyContent: "center", // Ensures internal content is centered
     alignItems: "center", // Horizontal centering
-    top: centerY + radiusY * Math.sin(rad) - iconSize / 2,
-    left: centerX + radiusX * Math.cos(rad) - iconSize / 2,
+    top: centerY + y - iconSize / 2,
+    left: centerX + x - iconSize / 2,
     width: iconSize + 30, // Match icon size
     height: iconSize, // Match icon size
-  };
-});
-
+  }));
 export default Table;
