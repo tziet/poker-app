@@ -141,18 +141,24 @@ export const updateSession = async (
   await updateDoc(docRef, { ...changes }); // Only write the fields that changed
 };
 
+export const getSession = async (id: string): Promise<Session | null> => {
+  const docSnap = await getDoc(doc(db, "sessions", id));
+  if (!docSnap.exists()) return null;
+  return { $id: docSnap.id, ...docSnap.data() } as Session;
+};
+
 /**
- * Atomically change a session's seat count: delete the removed players and
- * move the remaining ones to their new seats.
+ * Atomically save session settings (seat count, chip rate), delete the
+ * removed players and move the remaining ones to their new seats.
  */
-export const resizeSessionSeats = async (
+export const updateSessionSettings = async (
   sessionId: string,
-  seatCount: number,
+  settings: Pick<NewSession, "seatCount" | "chipRate" | "entryUnit">,
   seatChanges: { playerId: string; seat: number }[],
   removedPlayerIds: string[],
 ): Promise<void> => {
   const batch = writeBatch(db);
-  batch.update(doc(db, "sessions", sessionId), { seatCount });
+  batch.update(doc(db, "sessions", sessionId), { ...settings });
   removedPlayerIds.forEach((id) => batch.delete(doc(db, "players", id)));
   seatChanges.forEach(({ playerId, seat }) =>
     batch.update(doc(db, "players", playerId), { seat }),

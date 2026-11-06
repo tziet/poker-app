@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   View,
   Text,
@@ -12,9 +12,19 @@ import { Ionicons } from "@expo/vector-icons";
 import { icons } from "@/constants/icons";
 import GoBackButton from "@/app/components/ui/GoBackButton";
 import { useMoneySummary } from "@/hooks/useMoneySummary";
+import {
+  formatChipCount,
+  formatChips,
+  formatChipsAsMoney,
+  parseAmount,
+  showsMoney,
+} from "@/utils/money";
 
 const MoneySummary = () => {
+  // Raw text per player while typing, so an emptied field stays empty.
+  const [endgameText, setEndgameText] = useState<Record<string, string>>({});
   const {
+    session,
     moneySum,
     players,
     debts,
@@ -47,7 +57,19 @@ const MoneySummary = () => {
     .filter((p): p is Player => p !== null)
     .reduce((sum, p) => sum + (p.endgameChips || 0), 0);
 
-  const chipsMatchMoney = endgameChipsSum === moneySum;
+  // Chips can be fractional when typed as money, so compare to the cent.
+  const chipsMatchMoney = Math.abs(endgameChipsSum - moneySum) < 0.005;
+  const chipRate = session?.chipRate;
+
+  // Final chips are always entered as chips (counted off the table), whatever
+  // the session's entry unit; the money value is shown next to them.
+  const endgameValue = (player: Player) =>
+    endgameText[player.$id] ??
+    (player.endgameChips != null ? String(player.endgameChips) : "");
+  const changeEndgame = (player: Player, text: string) => {
+    setEndgameText((prev) => ({ ...prev, [player.$id]: text }));
+    handleEndgameChipsChange(player.$id, parseAmount(text) ?? 0);
+  };
 
   return (
     <View className="flex-1 bg-primary">
@@ -64,14 +86,14 @@ const MoneySummary = () => {
           resizeMode="contain"
         />
         <Text className="text-white text-center text-xl font-bold">
-          Money at the table: {moneySum}
+          Money at the table: {formatChips(moneySum, chipRate)}
         </Text>
         <Text
           className={`text-center text-base font-semibold mt-1 ${chipsMatchMoney ? "text-green-400" : "text-red-400"}`}
         >
           {chipsMatchMoney
             ? "Total chips match ✓"
-            : `Total chips: ${endgameChipsSum} (diff: ${endgameChipsSum - moneySum})`}
+            : `Total chips: ${formatChipCount(endgameChipsSum)} (diff: ${formatChipCount(endgameChipsSum - moneySum)})`}
         </Text>
 
         <View className="flex-row items-center justify-between mt-3 bg-secondary p-4 rounded">
@@ -89,7 +111,7 @@ const MoneySummary = () => {
                 <View>
                   <Text className="text-white text-base">{player.name}</Text>
                   <Text className="text-white text-sm">
-                    Buy-In Chips: {player.chips}
+                    Buy-In Chips: {formatChips(player.chips, chipRate)}
                   </Text>
                 </View>
 
@@ -97,12 +119,15 @@ const MoneySummary = () => {
                   <TextInput
                     className="rounded px-2 text-white bg-dark-200"
                     keyboardType="numeric"
-                    value={player.endgameChips?.toString() || ""}
-                    onChangeText={(value) =>
-                      handleEndgameChipsChange(player.$id, value)
-                    }
+                    value={endgameValue(player)}
+                    onChangeText={(value) => changeEndgame(player, value)}
                     maxLength={6}
                   />
+                  {showsMoney(chipRate) && (
+                    <Text className="text-gray-300 text-sm ml-2">
+                      ({formatChipsAsMoney(player.endgameChips || 0, chipRate)})
+                    </Text>
+                  )}
                 </View>
               </View>
             ),
@@ -129,7 +154,9 @@ const MoneySummary = () => {
                   />
                   <Text className="text-green-500">{debt.lender}</Text>
                 </View>
-                <Text className="text-white font-bold">₪{debt.amount}</Text>
+                <Text className="text-white font-bold">
+                  {formatChipsAsMoney(debt.amount, chipRate)}
+                </Text>
               </View>
             ))
           ) : (

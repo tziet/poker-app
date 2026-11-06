@@ -11,6 +11,15 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { icons } from "@/constants/icons";
+import {
+  EntryUnit,
+  chipsToEntry,
+  entryToChips,
+  formatChipCount,
+  formatChipsAsMoney,
+  formatEntry,
+  showsMoney,
+} from "@/utils/money";
 
 export type PopupAnchor = { x: number; y: number; width: number; height: number };
 
@@ -19,13 +28,18 @@ type Props = {
   player: Player | null;
   /** Window-relative frame of the tapped seat; the popup points at it. */
   anchor: PopupAnchor | null;
+  /** Session chip rate (chips per ₪1); money is shown when it isn't 1:1. */
+  chipRate: number;
+  /** Unit the buy-in is edited in; the ±50 steps are in this unit. */
+  entryUnit: EntryUnit;
   onClose: () => void;
   onSaveChips: (chips: number) => Promise<void>;
   onEditDetails: () => void;
   onDelete: () => Promise<void>;
 };
 
-const CHIP_STEP = 50;
+/** Step size in the unit being edited (₪50 or 50 chips). */
+const STEP = 50;
 const CARD_WIDTH = 260;
 const EDGE_MARGIN = 12;
 const ARROW_SIZE = 12;
@@ -60,6 +74,8 @@ const PlayerQuickActions = ({
   visible,
   player,
   anchor,
+  chipRate,
+  entryUnit,
   onClose,
   onSaveChips,
   onEditDetails,
@@ -76,6 +92,18 @@ const PlayerQuickActions = ({
 
   const originalChips = player.chips ?? 0;
   const diff = chips - originalChips;
+
+  // Amounts are kept in chips; shown and stepped in the entry unit.
+  const stepChips = entryToChips(STEP, chipRate, entryUnit);
+  const stepLabel = formatEntry(STEP, entryUnit);
+  const withMoney = showsMoney(chipRate);
+  const primary = (c: number) => formatEntry(chipsToEntry(c, chipRate, entryUnit), entryUnit);
+  const secondary = (c: number) =>
+    entryUnit === "money"
+      ? `${formatChipCount(c)} chips`
+      : formatChipsAsMoney(c, chipRate);
+  const signed = (text: string, value: number) =>
+    value > 0 ? `+${text}` : text;
 
   const run = async (action: () => Promise<void>) => {
     setBusy(true);
@@ -185,28 +213,36 @@ const PlayerQuickActions = ({
           ) : (
             <>
               <Text className='text-xs text-gray-500 text-center mb-2'>
-                Buy-in chips
+                {entryUnit === "money" ? "Buy-in" : "Buy-in chips"}
               </Text>
               <View className='flex-row items-center justify-between'>
                 <StepButton
-                  label={`−${CHIP_STEP}`}
-                  disabled={busy || chips - CHIP_STEP < 0}
-                  onPress={() => setChips((c) => Math.max(0, c - CHIP_STEP))}
+                  label={`−${stepLabel}`}
+                  disabled={busy || chips - stepChips < 0}
+                  onPress={() => setChips((c) => Math.max(0, c - stepChips))}
                 />
                 <View className='items-center'>
-                  <Text className='text-2xl font-bold text-black'>{chips}</Text>
+                  <Text className='text-2xl font-bold text-black'>
+                    {primary(chips)}
+                  </Text>
+                  {withMoney && (
+                    <Text className='text-sm text-gray-500'>
+                      ({secondary(chips)})
+                    </Text>
+                  )}
                   {diff !== 0 && (
                     <Text
                       className={`text-xs font-semibold ${diff > 0 ? "text-green-600" : "text-red-600"}`}
                     >
-                      {diff > 0 ? `+${diff}` : diff}
+                      {signed(primary(diff), diff)}
+                      {withMoney && ` (${signed(secondary(diff), diff)})`}
                     </Text>
                   )}
                 </View>
                 <StepButton
-                  label={`+${CHIP_STEP}`}
+                  label={`+${stepLabel}`}
                   disabled={busy}
-                  onPress={() => setChips((c) => c + CHIP_STEP)}
+                  onPress={() => setChips((c) => c + stepChips)}
                 />
               </View>
               {diff !== 0 && (
@@ -218,7 +254,7 @@ const PlayerQuickActions = ({
                   {busy && (
                     <ActivityIndicator size='small' color='#fff' className='mr-2' />
                   )}
-                  <Text className='text-white font-bold'>Save chips</Text>
+                  <Text className='text-white font-bold'>Save</Text>
                 </TouchableOpacity>
               )}
 

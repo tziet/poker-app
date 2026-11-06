@@ -23,7 +23,7 @@ import {
   getAllPlayers,
   createSession,
   updateSession,
-  resizeSessionSeats,
+  updateSessionSettings,
   updatePlayer,
   deletePlayer,
 } from "@/services/firebase";
@@ -33,7 +33,15 @@ import PlayerQuickActions, {
 import CreatePlayerForm from "@/app/components/forms/CreatePlayerForm";
 import ConfirmForm from "@/app/components/forms/ConfirmForm";
 import NewSessionForm from "@/app/components/forms/NewSessionForm";
-import EditSeatsForm from "@/app/components/forms/EditSeatsForm";
+import SessionSettingsForm, {
+  SessionSettings,
+} from "@/app/components/forms/SessionSettingsForm";
+import { Ionicons } from "@expo/vector-icons";
+import {
+  formatChips,
+  normalizeChipRate,
+  resolveEntryUnit,
+} from "@/utils/money";
 import {
   DEFAULT_SEATS,
   getSeatOffsets,
@@ -91,7 +99,9 @@ const ActionButton = forwardRef(
         tintColor={noTintColor ? undefined : "white"}
       />
       {bottomText && (
-        <Text className='text-white mt-2 text-sm'>{bottomText}</Text>
+        <Text className='text-white mt-2 text-sm' numberOfLines={1}>
+          {bottomText}
+        </Text>
       )}
     </TouchableOpacity>
   ),
@@ -106,7 +116,7 @@ const Table = () => {
     createPlayer: false,
     createSession: false,
     archiveSession: false,
-    editSeats: false,
+    sessionSettings: false,
   });
   // Bumped on every open so forms start fresh instead of keeping stale input.
   const [formKey, setFormKey] = useState(0);
@@ -122,16 +132,25 @@ const Table = () => {
   );
   const [selectedPosition, setSelectedPosition] = useState<number | null>(null);
 
-  // Seat count saved locally after a resize. It is tied to the fetched session
-  // object, so it is ignored as soon as the session is refetched from Firestore.
-  const [seatCountOverride, setSeatCountOverride] = useState<{
+  // Settings saved locally after editing them. They are tied to the fetched
+  // session object, so they're ignored once the session is refetched.
+  const [settingsOverride, setSettingsOverride] = useState<{
     session: Session;
-    count: number;
+    settings: SessionSettings;
   } | null>(null);
+  const savedSettings =
+    settingsOverride && settingsOverride.session === session
+      ? settingsOverride.settings
+      : null;
   const seatCount = normalizeSeatCount(
-    seatCountOverride && seatCountOverride.session === session
-      ? seatCountOverride.count
-      : session?.seatCount,
+    savedSettings?.seatCount ?? session?.seatCount,
+  );
+  const chipRate = normalizeChipRate(
+    savedSettings?.chipRate ?? session?.chipRate,
+  );
+  const entryUnit = resolveEntryUnit(
+    chipRate,
+    savedSettings?.entryUnit ?? session?.entryUnit,
   );
   const positions = useMemo(() => getSeatStyles(seatCount), [seatCount]);
 
@@ -211,14 +230,16 @@ const Table = () => {
     }
   };
 
-  const handleCreateSession = async (newSeatCount: number) => {
+  const handleCreateSession = async (settings: SessionSettings) => {
     if (!session && user) {
       try {
         await createSession({
           date: new Date(),
           isActive: true,
           userId: user.uid,
-          seatCount: normalizeSeatCount(newSeatCount),
+          seatCount: normalizeSeatCount(settings.seatCount),
+          chipRate: normalizeChipRate(settings.chipRate),
+          entryUnit: settings.entryUnit,
         });
         closeModal("createSession");
         setPlayers([]);
@@ -317,12 +338,18 @@ const Table = () => {
 
   const seatedPlayers = players.filter((p): p is Player => !!p);
 
-  const handleResizeSeats = async (
-    newSeatCount: number,
+  const handleSaveSettings = async (
+    settings: SessionSettings,
     removedPlayerIds: string[],
   ) => {
     if (!session) return;
-    const newCount = normalizeSeatCount(newSeatCount);
+    const newCount = normalizeSeatCount(settings.seatCount);
+    const newChipRate = normalizeChipRate(settings.chipRate);
+    const newSettings: SessionSettings = {
+      seatCount: newCount,
+      chipRate: newChipRate,
+      entryUnit: settings.entryUnit,
+    };
 
     // `players` is indexed by seat, so this is already in clockwise seat order.
     const remaining = players
@@ -343,9 +370,9 @@ const Table = () => {
     );
 
     try {
-      await resizeSessionSeats(
+      await updateSessionSettings(
         session.$id,
-        newCount,
+        newSettings,
         remaining
           .map((entry, i) => ({ playerId: entry.player.$id, seat: newSeats[i] }))
           .filter((change, i) => change.seat !== remaining[i].player.seat),
@@ -357,13 +384,19 @@ const Table = () => {
         updatedPlayers[newSeats[i]] = { ...entry.player, seat: newSeats[i] };
       });
       setPlayers(updatedPlayers);
-      setSeatCountOverride({ session, count: newCount });
-      closeModal("editSeats");
+      setSettingsOverride({
+        session,
+        settings: newSettings,
+      });
+      closeModal("sessionSettings");
     } catch (error) {
-      console.error("Error updating seats:", error);
-      alert("Failed to update seats. Please try again.");
+      console.error("Error updating session settings:", error);
+      alert("Failed to update session settings. Please try again.");
     }
   };
+
+  const tableChips = seatedPlayers.reduce((sum, p) => sum + (p.chips || 0), 0);
+  const showSessionControls = !loading && !error && !!session?.isActive;
 
   const renderModals = () => {
     return (
@@ -373,9 +406,12 @@ const Table = () => {
             visible: modalState.createPlayer,
             form: (
               <CreatePlayerForm
+                key={`create-player-${formKey}`}
                 onClose={() => closeModal("createPlayer")}
                 onSubmit={handleCreatePlayer}
                 selectedSeat={selectedPosition}
+                chipRate={chipRate}
+                entryUnit={entryUnit}
               />
             ),
           },
@@ -390,14 +426,14 @@ const Table = () => {
             ),
           },
           {
-            visible: modalState.editSeats,
+            visible: modalState.sessionSettings,
             form: (
-              <EditSeatsForm
-                key={`edit-seats-${formKey}`}
-                currentCount={seatCount}
+              <SessionSettingsForm
+                key={`session-settings-${formKey}`}
+                current={{ seatCount, chipRate, entryUnit }}
                 seatedPlayers={seatedPlayers}
-                onClose={() => closeModal("editSeats")}
-                onSubmit={handleResizeSeats}
+                onClose={() => closeModal("sessionSettings")}
+                onSubmit={handleSaveSettings}
               />
             ),
           },
@@ -419,12 +455,6 @@ const Table = () => {
 
   return (
     <View className='flex-1 bg-primary relative'>
-      <Image
-        source={icons.logo}
-        className='w-12 h-10 absolute mt-20 mx-auto self-center'
-        resizeMode='contain'
-        tintColor='white'
-      />
       {loading ? (
         <ActivityIndicator
           size='large'
@@ -437,32 +467,26 @@ const Table = () => {
         </View>
       ) : session?.isActive ? (
         <View className='flex-1 justify-center items-center'>
-          <Link key={`moneyButton`} href={"/screens/moneySummary"} asChild>
-            <ActionButton
-              style={{ top: 100, left: 40 }}
-              icon={icons.cash}
-              onPress={() => {}}
-              noTintColor={true}
-            />
-          </Link>
-          <ActionButton
-            onPress={() => openModal("archiveSession")}
-            style={{ top: 100, right: 40 }}
-            icon={icons.sessions}
-          />
-          {/* Seat count editor, next to the archive button in the top bar */}
-          <ActionButton
-            onPress={() => openModal("editSeats")}
-            style={{ top: 100, right: 90 }}
-            icon={icons.edit}
-            bottomText={`${seatCount} seats`}
-          />
           <Image
             source={images.pTable}
-            className='w-64 h-64 z-0 rotate-90'
+            style={tableImageStyle}
             resizeMode='contain'
             tintColor='white'
           />
+          {/* Money at the table and the settings button, below the table */}
+          <View style={tableTotalStyle} pointerEvents='box-none'>
+            <Text className='text-gray-300 text-xs'>Money at the table</Text>
+            <Text className='text-white text-lg font-bold' numberOfLines={1}>
+              {formatChips(tableChips, chipRate)}
+            </Text>
+            <TouchableOpacity
+              hitSlop={12}
+              onPress={() => openModal("sessionSettings")}
+              style={{ marginTop: 14 }}
+            >
+              <Ionicons name='settings-outline' size={28} color='white' />
+            </TouchableOpacity>
+          </View>
           {/* Player Slots */}
           {positions.map((style, i) =>
             !players[i] ? (
@@ -484,7 +508,7 @@ const Table = () => {
                 style={style}
                 icon={icons.user}
                 topText={players[i]?.name}
-                bottomText={`${players[i]?.chips || 0}`}
+                bottomText={formatChips(players[i]?.chips || 0, chipRate)}
                 onPress={() => openQuickActions(i)}
               />
             ),
@@ -501,12 +525,53 @@ const Table = () => {
         </View>
       )}
 
+      {/* Top bar: cash | logo | archive, all on the logo's centre line.
+          Plain styles (not classNames) so the layout can't silently drop. */}
+      <View style={topBarStyle} pointerEvents='box-none'>
+        <View style={[topBarSlotStyle, { alignItems: "flex-start" }]}>
+          {showSessionControls && (
+            <Link href='/screens/moneySummary' asChild>
+              <TouchableOpacity hitSlop={12}>
+                <Image
+                  source={icons.cash}
+                  style={topBarIconStyle}
+                  resizeMode='contain'
+                />
+              </TouchableOpacity>
+            </Link>
+          )}
+        </View>
+        <Image
+          source={icons.logo}
+          style={{ width: 48, height: 40 }}
+          resizeMode='contain'
+          tintColor='white'
+        />
+        <View style={[topBarSlotStyle, { alignItems: "flex-end" }]}>
+          {showSessionControls && (
+            <TouchableOpacity
+              hitSlop={12}
+              onPress={() => openModal("archiveSession")}
+            >
+              <Image
+                source={icons.sessions}
+                style={topBarIconStyle}
+                resizeMode='contain'
+                tintColor='white'
+              />
+            </TouchableOpacity>
+          )}
+        </View>
+      </View>
+
       {renderModals()}
       <PlayerQuickActions
         key={`quick-actions-${formKey}`}
         visible={quickActionsVisible}
         player={quickActions?.player ?? null}
         anchor={quickActions?.anchor ?? null}
+        chipRate={chipRate}
+        entryUnit={entryUnit}
         onClose={closeQuickActions}
         onSaveChips={handleQuickSaveChips}
         onEditDetails={handleQuickEdit}
@@ -523,6 +588,9 @@ const centerY = 445;
 const radiusX = 130;
 const radiusY = 240;
 
+// Wide enough for "1000 (₪100)" under the icon; the box stays centred on the seat.
+const seatWidth = 96;
+
 /** Seats evenly spaced (by arc length) around the table, symmetric for any count. */
 const getSeatStyles = (count: number): ViewStyle[] =>
   getSeatOffsets(count, radiusX, radiusY).map(({ x, y }) => ({
@@ -530,8 +598,45 @@ const getSeatStyles = (count: number): ViewStyle[] =>
     justifyContent: "center", // Ensures internal content is centered
     alignItems: "center", // Horizontal centering
     top: centerY + y - iconSize / 2,
-    left: centerX + x - iconSize / 2,
-    width: iconSize + 30, // Match icon size
+    left: centerX + 15 + x - seatWidth / 2,
+    width: seatWidth,
     height: iconSize, // Match icon size
   }));
+
+// The table drawing sits on the same centre point as the seats (not the screen
+// centre, which varies by phone height).
+const tableImageSize = 256;
+const tableImageStyle = {
+  position: "absolute" as const,
+  top: centerY - tableImageSize / 2,
+  left: centerX + 15 - tableImageSize / 2,
+  width: tableImageSize,
+  height: tableImageSize,
+  transform: [{ rotate: "90deg" }],
+};
+
+// Below the bottom seat, clear of its name/chips labels; settings button under it.
+const tableTotalWidth = 240;
+const tableTotalStyle: ViewStyle = {
+  position: "absolute",
+  top: centerY + radiusY + 48,
+  left: centerX + 15 - tableTotalWidth / 2,
+  width: tableTotalWidth,
+  alignItems: "center",
+};
+
+// Same vertical centre as the old logo (top 80, 40 tall).
+const topBarStyle: ViewStyle = {
+  position: "absolute",
+  top: 80,
+  left: 0,
+  right: 0,
+  height: 40,
+  paddingHorizontal: 32,
+  flexDirection: "row",
+  alignItems: "center",
+};
+// Equal-width side slots keep the logo exactly centred.
+const topBarSlotStyle: ViewStyle = { flex: 1, justifyContent: "center" };
+const topBarIconStyle = { width: 28, height: 28 };
 export default Table;
