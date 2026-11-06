@@ -2,6 +2,16 @@ import React, { useState } from "react";
 import { View, Text, TextInput, TouchableOpacity } from "react-native";
 import TextInputField from "@/app/components/inputs/TextInputField";
 import ButtonRow from "@/app/components/ui/ButtonRow";
+import EntryUnitToggle from "@/app/components/inputs/EntryUnitToggle";
+import {
+  EntryUnit,
+  convertEntryText,
+  entryHint,
+  entryLabel,
+  entryToChips,
+  parseAmount,
+  showsMoney,
+} from "@/utils/money";
 
 type Props = {
   onClose: () => void;
@@ -12,15 +22,32 @@ type Props = {
     seat: number | null;
   }) => void;
   selectedSeat: number | null;
+  /** Session chip rate; when not 1:1 the other unit is shown under the input. */
+  chipRate?: number;
+  /** Starting unit for the buy-in (the session's choice); the user can switch it. */
+  entryUnit?: EntryUnit;
 };
 
-const CreatePlayerForm = ({ onClose, onSubmit, selectedSeat }: Props) => {
+const CreatePlayerForm = ({
+  onClose,
+  onSubmit,
+  selectedSeat,
+  chipRate,
+  entryUnit: initialUnit = "chips",
+}: Props) => {
   const [name, setName] = useState("");
   const [chips, setChips] = useState("");
+  const [entryUnit, setEntryUnit] = useState<EntryUnit>(initialUnit);
+
+  const switchUnit = (unit: EntryUnit) => {
+    setChips((text) => convertEntryText(text, chipRate, entryUnit, unit));
+    setEntryUnit(unit);
+  };
 
   const handleSubmit = () => {
-    const chipsNumber = parseInt(chips, 10);
-    if (name.trim() && !isNaN(chipsNumber)) {
+    const amount = parseAmount(chips);
+    if (name.trim() && amount !== null) {
+      const chipsNumber = entryToChips(amount, chipRate, entryUnit);
       onSubmit({
         name,
         chips: chipsNumber,
@@ -46,13 +73,22 @@ const CreatePlayerForm = ({ onClose, onSubmit, selectedSeat }: Props) => {
         maxLength={10}
         placeholder="e.g. Namer Hakesef"
       />
+      {showsMoney(chipRate) && (
+        <EntryUnitToggle
+          compact
+          label="Enter buy-in in"
+          value={entryUnit}
+          onChange={switchUnit}
+        />
+      )}
       <TextInputField
-        label="Buy-In Chips"
+        label={entryLabel("Buy-In", entryUnit)}
         value={chips}
         onChangeText={setChips}
-        keyboardType="numeric"
-        maxLength={6}
+        keyboardType={entryUnit === "money" ? "decimal-pad" : "numeric"}
+        maxLength={entryUnit === "money" ? 8 : 6}
         placeholder="e.g. 100"
+        hint={entryHint(chips, chipRate, entryUnit)}
       />
       <ButtonRow onCancel={onClose} onSubmit={handleSubmit} />
     </View>

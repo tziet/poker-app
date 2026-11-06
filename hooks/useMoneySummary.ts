@@ -124,8 +124,9 @@ export const useMoneySummary = () => {
     return transactions;
   }, [state.players]);
 
-  const handleEndgameChipsChange = (id: string, value: string) => {
-    const parsedValue = parseInt(value, 10) || 0;
+  /** Set a player's end-of-game chips (already converted to chips). */
+  const handleEndgameChipsChange = (id: string, chips: number) => {
+    const parsedValue = Number.isFinite(chips) ? chips : 0;
     setState((prev) => ({
       ...prev,
       players: prev.players.map((player) =>
