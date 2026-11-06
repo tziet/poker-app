@@ -3,6 +3,7 @@ import React, {
   useState,
   useEffect,
   useMemo,
+  useRef,
   forwardRef,
 } from "react";
 import {
@@ -14,8 +15,7 @@ import {
   ViewStyle,
   ActivityIndicator,
 } from "react-native";
-import { useFocusEffect } from "expo-router";
-import { Link } from "expo-router";
+import { useFocusEffect, router, Link } from "expo-router";
 import { images } from "@/constants/images";
 import { icons } from "@/constants/icons";
 import {
@@ -24,7 +24,12 @@ import {
   createSession,
   updateSession,
   resizeSessionSeats,
+  updatePlayer,
+  deletePlayer,
 } from "@/services/firebase";
+import PlayerQuickActions, {
+  PopupAnchor,
+} from "@/app/components/ui/PlayerQuickActions";
 import CreatePlayerForm from "@/app/components/forms/CreatePlayerForm";
 import ConfirmForm from "@/app/components/forms/ConfirmForm";
 import NewSessionForm from "@/app/components/forms/NewSessionForm";
@@ -39,6 +44,9 @@ import { useSessionContext } from "@/contexts/SessionContext";
 import useActiveSession from "@/hooks/useSession";
 import ShowModal from "@/app/components/ui/ShowModal";
 import { useAuth } from "@/contexts/AuthContext";
+
+/** Native node behind a seat button; used to measure where the popup should point. */
+type SeatNode = React.ComponentRef<typeof View>;
 
 type ActionButtonProps = {
   onPress: () => void;
@@ -243,6 +251,70 @@ const Table = () => {
     }
   };
 
+  // Quick-actions popup for a seated player. The data is kept after closing so
+  // the popup's content stays visible while it fades out.
+  const seatRefs = useRef<(SeatNode | null)[]>([]);
+  const [quickActions, setQuickActions] = useState<{
+    player: Player;
+    anchor: PopupAnchor | null;
+  } | null>(null);
+  const [quickActionsVisible, setQuickActionsVisible] = useState(false);
+
+  const openQuickActions = (seat: number) => {
+    const player = players[seat];
+    if (!player) return;
+    const show = (anchor: PopupAnchor | null) => {
+      setFormKey((k) => k + 1); // fresh chip counter each time
+      setQuickActions({ player, anchor });
+      setQuickActionsVisible(true);
+    };
+    const node = seatRefs.current[seat];
+    if (!node) return show(null);
+    node.measureInWindow((x, y, width, height) =>
+      show({ x, y, width, height }),
+    );
+  };
+  const closeQuickActions = () => setQuickActionsVisible(false);
+
+  const replacePlayer = (playerId: string, next: Player | null) =>
+    setPlayers((prev) => prev.map((p) => (p?.$id === playerId ? next : p)));
+
+  const handleQuickSaveChips = async (chips: number) => {
+    const player = quickActions?.player;
+    if (!player) return;
+    try {
+      const updatedPlayer = { ...player, chips };
+      await updatePlayer(player.$id, updatedPlayer);
+      replacePlayer(player.$id, updatedPlayer);
+      closeQuickActions();
+    } catch (error) {
+      console.error("Error updating chips:", error);
+      alert("Failed to update chips. Please try again.");
+    }
+  };
+
+  const handleQuickEdit = () => {
+    const player = quickActions?.player;
+    if (!player) return;
+    closeQuickActions();
+    router.push(`/player/${player.$id}`);
+  };
+
+  // Same behaviour as the Delete Player button on the player screen.
+  const handleQuickDelete = async () => {
+    const player = quickActions?.player;
+    if (!player) return;
+    try {
+      await deletePlayer(player.$id);
+      replacePlayer(player.$id, null);
+      closeQuickActions();
+      alert(`Player ${player.name} has been deleted.`);
+    } catch (error) {
+      console.error("Error deleting player:", error);
+      alert("Failed to delete player.");
+    }
+  };
+
   const seatedPlayers = players.filter((p): p is Player => !!p);
 
   const handleResizeSeats = async (
@@ -404,19 +476,17 @@ const Table = () => {
                 icon={icons.plus}
               />
             ) : (
-              <Link
+              <ActionButton
                 key={`player-${i}`}
-                href={`/player/${players[i]?.$id}`}
-                asChild
-              >
-                <ActionButton
-                  style={style}
-                  icon={icons.user}
-                  topText={players[i]?.name}
-                  bottomText={`${players[i]?.chips || 0}`}
-                  onPress={() => {}}
-                />
-              </Link>
+                ref={(node: SeatNode | null) => {
+                  seatRefs.current[i] = node;
+                }}
+                style={style}
+                icon={icons.user}
+                topText={players[i]?.name}
+                bottomText={`${players[i]?.chips || 0}`}
+                onPress={() => openQuickActions(i)}
+              />
             ),
           )}
         </View>
@@ -432,6 +502,16 @@ const Table = () => {
       )}
 
       {renderModals()}
+      <PlayerQuickActions
+        key={`quick-actions-${formKey}`}
+        visible={quickActionsVisible}
+        player={quickActions?.player ?? null}
+        anchor={quickActions?.anchor ?? null}
+        onClose={closeQuickActions}
+        onSaveChips={handleQuickSaveChips}
+        onEditDetails={handleQuickEdit}
+        onDelete={handleQuickDelete}
+      />
     </View>
   );
 };
